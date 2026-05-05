@@ -1,0 +1,37 @@
+export const theme = {
+  gradient: {
+    colors: ['#4c669f', '#3b5998', '#192f6a'] as const,
+    start: { x: 0, y: 0 },
+    end: { x: 0, y: 1 },
+  },
+  colors: {
+    textEditable: '#FFFFFF',
+    textReadOnly: '#6a87af',
+    inputBackground: '#2d5386',
+    cardBackground: '#4a7fb8',
+    titleBackground: '#3b699e',
+    titleText: '#e0f2fe',
+    searchBackground: '#86a8cf',
+    buttonPrimary: '#4a7fb8',
+    buttonSecondary: '#2d5386',
+    labelText: '#d8e0ea',
+    statusActivo: '#f59e0b',
+    statusFinalizado: '#22c55e',
+    statusAtrasado: '#ef4444',
+    statusHabilitado: '#22c55e',
+    statusSuspendido: '#ef4444',
+    statusDisponible: '#22c55e',
+    statusNoDisponible: '#ef4444',
+  },
+  borderRadius: {
+    small: 16,
+    medium: 24,
+    large: 30,
+  },
+  fontSize: {
+    label: 14,
+    input: 16,
+    title: 18,
+    button: 20,
+  },
+}
