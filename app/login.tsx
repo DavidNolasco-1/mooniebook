@@ -8,7 +8,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -46,16 +45,13 @@ export default function LoginScreen() {
       colors={theme.gradient.colors}
       start={theme.gradient.start}
       end={theme.gradient.end}
-      style={styles.container}
+      style={styles.background}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+        style={styles.container}
       >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-        >
+        <View style={styles.card}>
           <Image
             source={require('../assets/logo.png')}
             style={styles.logo}
@@ -65,65 +61,68 @@ export default function LoginScreen() {
           <Text style={styles.title}>MoonieBook</Text>
           <Text style={styles.subtitle}>Biblioteca Académica UACM</Text>
 
-          <View style={styles.form}>
-            <CustomInput
-              label="Correo electrónico"
-              iconName="email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              placeholder="correo@ejemplo.com"
-            />
+        <View style={{ width: '100%' }}></View>
+          <CustomInput
+            label="Correo electrónico"
+            iconName="email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholder="correo@ejemplo.com"
+          />
 
-            <CustomInput
-              label="Contraseña"
-              iconName="lock"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholder="••••••••"
-            />
+          <CustomInput
+            label="Contraseña"
+            iconName="lock"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholder="••••••••"
+          />
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? <Text style={styles.error}>{error}</Text> : null}
 
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              {loading ? (
-                <ActivityIndicator color={theme.colors.textEditable} />
-              ) : (
-                <Text style={styles.buttonText}>Iniciar sesión</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            {loading ? (
+              <ActivityIndicator color={theme.colors.textEditable} />
+            ) : (
+              <Text style={styles.buttonText}>Iniciar sesión</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
     </LinearGradient>
   )
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scroll: {
-    flexGrow: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 48,
+    alignItems: 'center',
+    padding: 20, 
+  },
+  card: {
+    width: '100%',
+    maxWidth: 450,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: theme.borderRadius.large,
+    padding: 40,
+    alignItems: 'center',
   },
   logo: {
-    width: 120,
-    height: 120,
+    width: 100,
+    height: 100,
     marginBottom: 16,
   },
   title: {
@@ -136,10 +135,7 @@ const styles = StyleSheet.create({
   subtitle: {
     color: theme.colors.labelText,
     fontSize: theme.fontSize.label,
-    marginBottom: 40,
-  },
-  form: {
-    width: '100%',
+    marginBottom: 32,
   },
   error: {
     color: theme.colors.statusAtrasado,
@@ -147,14 +143,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
     marginTop: -4,
+    alignSelf: 'stretch',
   },
   button: {
+    width: '100%',
     backgroundColor: theme.colors.buttonSecondary,
     borderRadius: theme.borderRadius.small,
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
+    alignSelf: 'stretch',
   },
   buttonDisabled: {
     opacity: 0.6,
