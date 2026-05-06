@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
+import { useState } from 'react'
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput } from 'react-native'
 import { useRouter } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { theme } from '@/styles/theme'
@@ -6,49 +7,23 @@ import { theme } from '@/styles/theme'
 // ─── Datos estáticos ─────────────────────────────────────────────────────────
 
 const ACCIONES = [
-  {
-    label: 'Dar de alta un ejemplar',
-    icon: 'add-circle-outline' as const,
-    route: '/(app)/catalogo/registrar',
-  },
-  {
-    label: 'Búsqueda por ISBN',
-    icon: 'search' as const,
-    route: '/(app)/catalogo/consultar',
-  },
-  {
-    label: 'Actualizar información existente',
-    icon: 'edit' as const,
-    route: '/(app)/catalogo/modificar',
-  },
+  { label: 'Dar de alta un ejemplar',       icon: 'add-circle-outline' as const, route: '/(app)/catalogo/registrar' },
+  { label: 'Búsqueda por ISBN',             icon: 'search'             as const, route: '/(app)/catalogo/consultar' },
+  { label: 'Actualizar información existente', icon: 'edit'            as const, route: '/(app)/catalogo/modificar' },
 ]
+
+const CATEGORIAS = ['Ficción', 'Drama', 'Ciencia', 'Historia', 'Literatura', 'Filosofía', 'Arte', 'Tecnología']
 
 // TODO: conectar a servidor
-const CATEGORIAS = [
-  { label: 'Ficción',       color: theme.colors.cardBackground   },
-  { label: 'Matemáticas',   color: theme.colors.titleBackground  },
-  { label: 'Ciencias',      color: theme.colors.statusFinalizado },
-  { label: 'Historia',      color: theme.colors.statusActivo     },
-  { label: 'Literatura',    color: theme.colors.buttonSecondary  },
-  { label: 'Filosofía',     color: theme.colors.statusAtrasado   },
-  { label: 'Física',        color: theme.colors.searchBackground },
-]
-
-type Movimiento = { isbn: string; accion: string; fecha: string; usuario: string }
-
-// TODO: conectar a servidor
-const MOVIMIENTOS: Movimiento[] = [
-  { isbn: '978-607-32-1234-5', accion: 'Alta',      fecha: '05/05/2026', usuario: 'Admin' },
-  { isbn: '978-607-18-9876-3', accion: 'Préstamo',  fecha: '05/05/2026', usuario: 'Admin' },
-  { isbn: '978-607-07-3456-7', accion: 'Alta',      fecha: '04/05/2026', usuario: 'Admin' },
-  { isbn: '978-607-43-5678-9', accion: 'Consulta',  fecha: '04/05/2026', usuario: 'Admin' },
-]
-
-const COLS: { key: keyof Movimiento; header: string; flex: number }[] = [
-  { key: 'isbn',    header: 'ISBN',    flex: 3 },
-  { key: 'accion',  header: 'Acción',  flex: 2 },
-  { key: 'fecha',   header: 'Fecha',   flex: 2 },
-  { key: 'usuario', header: 'Usuario', flex: 2 },
+const LIBROS_MOCK = [
+  { id: '1', titulo: 'La Mente',      color: theme.colors.cardBackground   },
+  { id: '2', titulo: 'Álgebra',       color: theme.colors.buttonSecondary  },
+  { id: '3', titulo: 'Historia MX',   color: theme.colors.statusActivo     },
+  { id: '4', titulo: 'Física I',      color: theme.colors.titleBackground  },
+  { id: '5', titulo: 'Química',       color: theme.colors.statusFinalizado },
+  { id: '6', titulo: 'Literatura',    color: theme.colors.searchBackground },
+  { id: '7', titulo: 'Filosofía',     color: theme.colors.cardBackground   },
+  { id: '8', titulo: 'Arte Moderno',  color: theme.colors.buttonSecondary  },
 ]
 
 // ─── Estilos compartidos ──────────────────────────────────────────────────────
@@ -63,40 +38,44 @@ const GLASS = {
 
 export default function CatalogoIndex() {
   const router = useRouter()
+  const [query, setQuery] = useState('')
+
+  const librosFiltrados = LIBROS_MOCK.filter((l) =>
+    l.titulo.toLowerCase().includes(query.toLowerCase())
+  )
 
   return (
     <View style={styles.container}>
 
-      {/* ── Fila 1: Header ────────────────────────────────────────────────── */}
+      {/* ── Fila 1: Header ───────────────────────────────────────────────── */}
       <View style={styles.headerRow}>
 
-        {/* Izquierda: flecha + píldora título */}
         <View style={styles.headerLeft}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => router.back()}
-            activeOpacity={0.8}
-          >
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
             <MaterialIcons name="arrow-back-ios-new" size={17} color={theme.colors.textEditable} />
           </TouchableOpacity>
-
           <View style={styles.titlePill}>
             <MaterialIcons name="menu-book" size={17} color={theme.colors.titleText} />
             <Text style={styles.titleText}>Catálogo de Libros</Text>
           </View>
         </View>
 
-        {/* Derecha: búsqueda falsa + iconos */}
         <View style={styles.headerRight}>
-          <TouchableOpacity
-            style={styles.fakeSearch}
-            onPress={() => router.push('/(app)/catalogo/consultar' as any)}
-            activeOpacity={0.85}
-          >
+          <View style={styles.searchBox}>
             <MaterialIcons name="search" size={16} color="rgba(255,255,255,0.42)" />
-            <Text style={styles.fakeSearchText}>Buscar por ISBN o título...</Text>
-          </TouchableOpacity>
-
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar título..."
+              placeholderTextColor="rgba(255,255,255,0.38)"
+              value={query}
+              onChangeText={setQuery}
+            />
+            {query.length > 0 && (
+              <TouchableOpacity onPress={() => setQuery('')}>
+                <MaterialIcons name="close" size={15} color="rgba(255,255,255,0.42)" />
+              </TouchableOpacity>
+            )}
+          </View>
           <TouchableOpacity style={styles.iconBtn}>
             <MaterialIcons name="notifications-none" size={20} color="rgba(255,255,255,0.72)" />
           </TouchableOpacity>
@@ -104,9 +83,10 @@ export default function CatalogoIndex() {
             <MaterialIcons name="menu" size={20} color="rgba(255,255,255,0.72)" />
           </TouchableOpacity>
         </View>
+
       </View>
 
-      {/* ── Fila 2: Recuadros de acción ───────────────────────────────────── */}
+      {/* ── Fila 2: Recuadros de acción ──────────────────────────────────── */}
       <View style={styles.actionRow}>
         {ACCIONES.map((btn) => (
           <TouchableOpacity
@@ -126,52 +106,50 @@ export default function CatalogoIndex() {
       {/* ── Fila 3: Carrusel de categorías ───────────────────────────────── */}
       <View style={styles.carouselSection}>
         <Text style={styles.sectionLabel}>EXPLORAR POR CATEGORÍA</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.carouselContent}
-        >
-          {/* TODO: conectar a servidor */}
-          {CATEGORIAS.map((cat, i) => (
-            <TouchableOpacity key={i} style={styles.catCard} activeOpacity={0.82}>
-              <View style={styles.catPill}>
-                <Text style={styles.catPillText}>{cat.label}</Text>
-              </View>
-              <View style={[styles.catCover, { backgroundColor: cat.color }]} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselContent}>
+          {CATEGORIAS.map((cat) => (
+            <TouchableOpacity key={cat} style={styles.catPill} activeOpacity={0.8}>
+              <Text style={styles.catPillText}>{cat}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
 
-      {/* ── Fila 4: Tabla de movimientos ──────────────────────────────────── */}
-      <View style={styles.tableContainer}>
+      {/* ── Fila 4: Grid de libros + Tabla de movimientos ────────────────── */}
+      <View style={styles.bottomRow}>
 
-        {/* Píldora de título */}
-        <View style={styles.tableTitlePill}>
-          <MaterialIcons name="history" size={15} color={theme.colors.titleText} />
-          <Text style={styles.tableTitleText}>Resumen de los Últimos Movimientos</Text>
-        </View>
-
-        {/* Cabeceras */}
-        <View style={styles.tableRow}>
-          {COLS.map((col) => (
-            <View key={col.key} style={[styles.cellBox, styles.headerBox, { flex: col.flex }]}>
-              <Text style={styles.headerBoxText}>{col.header}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Filas de datos */}
+        {/* Grid de libros */}
         {/* TODO: conectar a servidor */}
-        {MOVIMIENTOS.map((row, i) => (
-          <View key={i} style={styles.tableRow}>
-            {COLS.map((col) => (
-              <View key={col.key} style={[styles.cellBox, { flex: col.flex }]}>
-                <Text style={styles.cellBoxText} numberOfLines={1}>{row[col.key]}</Text>
+        <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.bookGrid}>
+            {librosFiltrados.length === 0 ? (
+              <View style={styles.gridEmpty}>
+                <MaterialIcons name="search-off" size={28} color={theme.colors.textReadOnly} />
+                <Text style={styles.gridEmptyText}>Sin resultados para "{query}"</Text>
               </View>
-            ))}
+            ) : (
+              librosFiltrados.map((libro) => (
+                <View key={libro.id} style={styles.bookCard}>
+                  <View style={[styles.bookCover, { backgroundColor: libro.color }]} />
+                  <Text style={styles.bookTitle} numberOfLines={2}>{libro.titulo}</Text>
+                </View>
+              ))
+            )}
           </View>
-        ))}
+        </ScrollView>
+
+        {/* Tabla de movimientos */}
+        <View style={styles.tableContainer}>
+          <View style={styles.tableTitlePill}>
+            <MaterialIcons name="history" size={15} color={theme.colors.titleText} />
+            <Text style={styles.tableTitleText}>Resumen de los Últimos Movimientos</Text>
+          </View>
+          {/* TODO: conectar a servidor */}
+          <View style={styles.tableEmpty}>
+            <MaterialIcons name="inbox" size={34} color={theme.colors.textReadOnly} />
+            <Text style={styles.tableEmptyText}>Aún no hay movimientos registrados</Text>
+          </View>
+        </View>
 
       </View>
 
@@ -222,20 +200,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  fakeSearch: {
+  searchBox: {
     ...GLASS,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     borderRadius: 100,
     paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingVertical: 6,
     width: 240,
   },
-  fakeSearchText: {
-    color: 'rgba(255,255,255,0.38)',
-    fontSize: 13,
+  searchInput: {
     flex: 1,
+    color: theme.colors.textEditable,
+    fontSize: 13,
+    padding: 0,
   },
   iconBtn: {
     ...GLASS,
@@ -281,43 +260,80 @@ const styles = StyleSheet.create({
     letterSpacing: 1.3,
   },
   carouselContent: {
-    gap: 10,
+    gap: 8,
     paddingRight: 4,
   },
-  catCard: {
-    ...GLASS,
-    borderRadius: 16,
-    width: 110,
-    height: 130,
-    padding: 10,
-    gap: 8,
-    overflow: 'hidden',
-  },
   catPill: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
     borderRadius: 100,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
   },
   catPillText: {
     color: theme.colors.textEditable,
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  catCover: {
-    flex: 1,
-    borderRadius: 8,
-    opacity: 0.88,
+    fontSize: 12,
+    fontWeight: '600',
   },
 
   /* ── Fila 4 ─────────────────────────────────────────────────────────── */
-  tableContainer: {
+  bottomRow: {
     flex: 1,
+    flexDirection: 'row',
+    gap: 14,
+  },
+
+  /* Grid */
+  gridScroll: {
+    flex: 1,
+  },
+  bookGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  bookCard: {
+    ...GLASS,
+    borderRadius: 14,
+    width: 88,
+    overflow: 'hidden',
+    padding: 8,
+    gap: 6,
+    alignItems: 'center',
+  },
+  bookCover: {
+    width: '100%',
+    height: 68,
+    borderRadius: 8,
+    opacity: 0.9,
+  },
+  bookTitle: {
+    color: theme.colors.textEditable,
+    fontSize: 10,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 14,
+  },
+  gridEmpty: {
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: 24,
+    paddingHorizontal: 12,
+  },
+  gridEmptyText: {
+    color: theme.colors.textReadOnly,
+    fontSize: 13,
+    textAlign: 'center',
+  },
+
+  /* Tabla */
+  tableContainer: {
+    width: 310,
     ...GLASS,
     borderRadius: 20,
-    padding: 14,
-    gap: 8,
+    padding: 16,
+    gap: 10,
   },
   tableTitlePill: {
     flexDirection: 'row',
@@ -328,40 +344,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 100,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   tableTitleText: {
     color: theme.colors.titleText,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
-  tableRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  cellBox: {
-    borderRadius: 12,
-    paddingVertical: 9,
-    paddingHorizontal: 10,
-    justifyContent: 'center',
+  tableEmpty: {
+    flex: 1,
     alignItems: 'center',
-    backgroundColor: 'rgba(45, 83, 134, 0.65)',  // theme.colors.buttonSecondary
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    gap: 10,
   },
-  headerBox: {
-    backgroundColor: 'rgba(59, 105, 158, 0.85)',  // theme.colors.titleBackground
-  },
-  headerBoxText: {
-    color: theme.colors.titleText,
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  cellBoxText: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 12,
-    fontWeight: '500',
+  tableEmptyText: {
+    color: theme.colors.textReadOnly,
+    fontSize: 13,
+    textAlign: 'center',
   },
 })
