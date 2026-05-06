@@ -1,9 +1,13 @@
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     // File Layout
     // "rootDir": "./src",
     // "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
@@ -39,6 +43,6 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true,
+    "skipLibCheck": true
   }
 }
