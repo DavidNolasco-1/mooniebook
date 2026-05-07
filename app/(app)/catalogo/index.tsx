@@ -1,29 +1,28 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useRouter, useFocusEffect } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { theme } from '@/styles/theme'
+import { obtenerCatalogo } from '@/services/CatalogoService'
 
 // ─── Datos estáticos ─────────────────────────────────────────────────────────
 
 const ACCIONES = [
-  { label: 'Dar de alta un ejemplar',       icon: 'add-circle-outline' as const, route: '/(app)/catalogo/registrar' },
-  { label: 'Búsqueda por ISBN',             icon: 'search'             as const, route: '/(app)/catalogo/consultar' },
-  { label: 'Actualizar información existente', icon: 'edit'            as const, route: '/(app)/catalogo/modificar' },
+  { label: 'Dar de alta un ejemplar',          icon: 'add-circle-outline' as const, route: '/(app)/catalogo/registrar' },
+  { label: 'Búsqueda por ISBN',                icon: 'search'             as const, route: '/(app)/catalogo/consultar' },
+  { label: 'Actualizar información existente', icon: 'edit'               as const, route: '/(app)/catalogo/modificar' },
 ]
 
 const CATEGORIAS = ['Ficción', 'Drama', 'Ciencia', 'Historia', 'Literatura', 'Filosofía', 'Arte', 'Tecnología']
 
-// TODO: conectar a servidor
-const LIBROS_MOCK = [
-  { id: '1', titulo: 'La Mente',      color: theme.colors.cardBackground   },
-  { id: '2', titulo: 'Álgebra',       color: theme.colors.buttonSecondary  },
-  { id: '3', titulo: 'Historia MX',   color: theme.colors.statusActivo     },
-  { id: '4', titulo: 'Física I',      color: theme.colors.titleBackground  },
-  { id: '5', titulo: 'Química',       color: theme.colors.statusFinalizado },
-  { id: '6', titulo: 'Literatura',    color: theme.colors.searchBackground },
-  { id: '7', titulo: 'Filosofía',     color: theme.colors.cardBackground   },
-  { id: '8', titulo: 'Arte Moderno',  color: theme.colors.buttonSecondary  },
+// Paleta de colores cíclica para portadas (los docs de Firestore no tienen color)
+const COVER_COLORS = [
+  theme.colors.cardBackground,
+  theme.colors.buttonSecondary,
+  theme.colors.statusActivo,
+  theme.colors.titleBackground,
+  theme.colors.statusFinalizado,
+  theme.colors.searchBackground,
 ]
 
 // ─── Estilos compartidos ──────────────────────────────────────────────────────
@@ -38,10 +37,19 @@ const GLASS = {
 
 export default function CatalogoIndex() {
   const router = useRouter()
-  const [query, setQuery] = useState('')
+  const [query,  setQuery]  = useState('')
+  const [libros, setLibros] = useState<any[]>([])
 
-  const librosFiltrados = LIBROS_MOCK.filter((l) =>
-    l.titulo.toLowerCase().includes(query.toLowerCase())
+  useFocusEffect(
+    useCallback(() => {
+      obtenerCatalogo()
+        .then(setLibros)
+        .catch((e) => console.error('CatalogoIndex:', e))
+    }, [])
+  )
+
+  const librosFiltrados = libros.filter((l) =>
+    (l.titulo ?? '').toLowerCase().includes(query.toLowerCase())
   )
 
   return (
@@ -128,12 +136,18 @@ export default function CatalogoIndex() {
                 <Text style={styles.gridEmptyText}>Sin resultados para "{query}"</Text>
               </View>
             ) : (
-              librosFiltrados.map((libro) => (
-                <View key={libro.id} style={styles.bookCard}>
-                  <View style={[styles.bookCover, { backgroundColor: libro.color }]} />
-                  <Text style={styles.bookTitle} numberOfLines={2}>{libro.titulo}</Text>
-                </View>
-              ))
+              librosFiltrados.map((libro, i) => {
+                const disponible = parseInt(libro.ejemplares ?? '0') > 0
+                return (
+                  <View key={libro.id ?? i} style={styles.bookCard}>
+                    <View style={[styles.bookCover, { backgroundColor: COVER_COLORS[i % COVER_COLORS.length] }]}>
+                      <View style={[styles.disponibleDot, { backgroundColor: disponible ? theme.colors.statusFinalizado : theme.colors.statusAtrasado }]} />
+                    </View>
+                    <Text style={styles.bookTitle} numberOfLines={2}>{libro.titulo}</Text>
+                    <Text style={styles.bookAutor} numberOfLines={1}>{libro.autor}</Text>
+                  </View>
+                )
+              })
             )}
           </View>
         </ScrollView>
@@ -307,6 +321,16 @@ const styles = StyleSheet.create({
     height: 68,
     borderRadius: 8,
     opacity: 0.9,
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+    padding: 4,
+  },
+  disponibleDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.2)',
   },
   bookTitle: {
     color: theme.colors.textEditable,
@@ -314,6 +338,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     lineHeight: 14,
+  },
+  bookAutor: {
+    color: theme.colors.textReadOnly,
+    fontSize: 9,
+    textAlign: 'center',
   },
   gridEmpty: {
     alignItems: 'center',
