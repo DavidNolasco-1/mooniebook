@@ -27,7 +27,7 @@ export const registrarPrestamo = async (datos: any): Promise<string> => {
 
 export const procesarDevolucion = async (idPrestamo: string, isbn: string): Promise<void> => {
   try {
-    await updateDoc(doc(db, 'prestamos', idPrestamo), { estado: 'Devuelto' })
+    await updateDoc(doc(db, 'prestamos', idPrestamo), { estado: 'Finalizado' })
 
     const libroSnap = await getDoc(doc(db, 'libros', isbn))
     if (libroSnap.exists()) {

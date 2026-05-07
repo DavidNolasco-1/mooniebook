@@ -70,8 +70,8 @@ export default function CatalogoRegistrar() {
     }
     setError('')
     try {
-      const datos = { titulo, autor, editorial, fechaPublicacion, ejemplares, categoria }
-      await registrarLibro(datos, isbn)
+      const datos = { isbn, titulo, autor, editorial, fechaPublicacion, ejemplares, categoria }
+      await registrarLibro(datos)
       setIsbn(''); setTitulo(''); setAutor('')
       setEditorial(''); setFechaPublicacion(''); setEjemplares(''); setCategoria('')
       Alert.alert('Éxito', 'Libro registrado en el catálogo')

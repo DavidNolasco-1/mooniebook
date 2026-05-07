@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput } from 
 import { useRouter, useFocusEffect } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { theme } from '@/styles/theme'
-import { obtenerCatalogo } from '@/services/CatalogoService'
+import { obtenerLibrosRecientes } from '@/services/CatalogoService'
 
 // ─── Datos estáticos ─────────────────────────────────────────────────────────
 
@@ -42,7 +42,7 @@ export default function CatalogoIndex() {
 
   useFocusEffect(
     useCallback(() => {
-      obtenerCatalogo()
+      obtenerLibrosRecientes()
         .then(setLibros)
         .catch((e) => console.error('CatalogoIndex:', e))
     }, [])
