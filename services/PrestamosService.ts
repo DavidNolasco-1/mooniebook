@@ -1,14 +1,28 @@
 import { db } from '@/lib/firebase'
-import { collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore'
+import { collection, addDoc, getDocs, query, orderBy, getDoc, doc, updateDoc } from 'firebase/firestore'
 
 export const registrarPrestamo = async (datos: any): Promise<string> => {
-  try {
-    const ref = await addDoc(collection(db, 'prestamos'), datos)
-    return ref.id
-  } catch (error) {
-    console.error('registrarPrestamo:', error)
-    throw error
-  }
+  const { idLector, isbn } = datos
+
+  const lectorSnap = await getDoc(doc(db, 'lectores', idLector))
+  if (!lectorSnap.exists())
+    throw new Error('El lector no está registrado.')
+  if (lectorSnap.data().estado !== 'Habilitado')
+    throw new Error('El lector no está habilitado para pedir libros.')
+
+  const libroSnap = await getDoc(doc(db, 'libros', isbn))
+  if (!libroSnap.exists())
+    throw new Error('El libro no existe en el catálogo.')
+  if ((libroSnap.data().ejemplares ?? 0) <= 0)
+    throw new Error('El libro no se encuentra disponible en este momento.')
+
+  const ref = await addDoc(collection(db, 'prestamos'), { ...datos, estado: 'Activo' })
+
+  await updateDoc(doc(db, 'libros', isbn), {
+    ejemplares: libroSnap.data().ejemplares - 1,
+  })
+
+  return ref.id
 }
 
 export const obtenerPrestamosRecientes = async (): Promise<any[]> => {

@@ -53,8 +53,8 @@ export default function PrestamosRegistrar() {
       setIdLector('')
       setIsbn('')
       Alert.alert('Éxito', 'Préstamo autorizado y registrado')
-    } catch {
-      Alert.alert('Error', 'No se pudo registrar el préstamo. Intenta de nuevo.')
+    } catch (error: any) {
+      Alert.alert('Error', error?.message ?? 'No se pudo registrar el préstamo. Intenta de nuevo.')
     }
   }
 
