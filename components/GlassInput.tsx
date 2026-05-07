@@ -10,17 +10,18 @@ export type GlassInputProps = {
   hint?: string
   keyboardType?: 'default' | 'numeric'
   alert?: boolean
+  textColor?: string
 }
 
 export function GlassInput({
   label, value, onChangeText, placeholder,
-  editable = true, hint, keyboardType = 'default', alert = false,
+  editable = true, hint, keyboardType = 'default', alert = false, textColor,
 }: GlassInputProps) {
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={[styles.input, !editable && styles.readOnly, alert && styles.alertInput]}
+        style={[styles.input, !editable && styles.readOnly, alert && styles.alertInput, textColor ? { color: textColor } : null]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder ?? label}

@@ -29,6 +29,14 @@ export default function PrestamosRegistrar() {
   const personaCargo = auth.currentUser?.displayName ?? 'Emily Dannae'
   const isDisabled   = estadoLibro !== 'Disponible' || estadoLector !== 'Habilitado'
 
+  const colorLector = estadoLector === 'Habilitado'   ? theme.colors.statusHabilitado
+                    : estadoLector === ''              ? theme.colors.textReadOnly
+                    : theme.colors.statusAtrasado
+
+  const colorLibro  = estadoLibro  === 'Disponible'   ? theme.colors.statusFinalizado
+                    : estadoLibro  === ''              ? theme.colors.textReadOnly
+                    : theme.colors.statusAtrasado
+
   useEffect(() => {
     if (!idLector.trim()) { setEstadoLector(''); return }
     setEstadoLector('Buscando...')
@@ -140,6 +148,7 @@ export default function PrestamosRegistrar() {
                 label="Estado del Lector"
                 value={estadoLector}
                 editable={false}
+                textColor={colorLector}
               />
               <GlassInput
                 label="Persona encargada del registro"
@@ -160,7 +169,8 @@ export default function PrestamosRegistrar() {
                 label="Estado del Libro"
                 value={estadoLibro}
                 editable={false}
-                alert={estadoLibro === 'No Disponible'}
+                alert={estadoLibro === 'No Disponible' || estadoLibro === 'No encontrado'}
+                textColor={colorLibro}
               />
             </View>
 
