@@ -1,25 +1,28 @@
+import { useState, useCallback } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useRouter, useFocusEffect } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { theme } from '@/styles/theme'
+import { obtenerPrestamosRecientes } from '@/services/PrestamosService'
 
-// ─── Datos mock ───────────────────────────────────────────────────────────────
+// ─── Columnas de la tabla ─────────────────────────────────────────────────────
 
-type PrestamoActivo = { isbn: string; idLector: string; fecha: string; estado: string }
+type FilaPrestamo = { isbn: string; idLector: string; fecha: string; estado: string }
 
-// TODO: conectar a servidor
-const PRESTAMOS: PrestamoActivo[] = [
-  { isbn: '978-3-16-148410-0', idLector: 'L-001', fecha: '25/04/2026', estado: 'Pendiente' },
-  { isbn: '978-0-596-52068-7', idLector: 'L-018', fecha: '28/04/2026', estado: 'Pendiente' },
-  { isbn: '978-0-316-20128-4', idLector: 'L-022', fecha: '30/04/2026', estado: 'Pendiente' },
-]
-
-const COLS: { key: keyof PrestamoActivo; header: string; flex: number }[] = [
+const COLS: { key: keyof FilaPrestamo; header: string; flex: number }[] = [
   { key: 'isbn',     header: 'ISBN',      flex: 4 },
   { key: 'idLector', header: 'ID Lector', flex: 2 },
   { key: 'fecha',    header: 'Fecha',     flex: 2 },
   { key: 'estado',   header: 'Estado',    flex: 2 },
 ]
+
+const formatFecha = (iso: string) => {
+  try {
+    return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  } catch {
+    return iso
+  }
+}
 
 // ─── Estilos compartidos ──────────────────────────────────────────────────────
 
@@ -33,6 +36,24 @@ const GLASS = {
 
 export default function PrestamosIndex() {
   const router = useRouter()
+  const [prestamosActivos, setPrestamosActivos] = useState<FilaPrestamo[]>([])
+
+  useFocusEffect(
+    useCallback(() => {
+      obtenerPrestamosRecientes()
+        .then((data) =>
+          setPrestamosActivos(
+            data.map((p) => ({
+              isbn:      p.isbn      ?? '—',
+              idLector:  p.idLector  ?? '—',
+              fecha:     p.fechaSalida ? formatFecha(p.fechaSalida) : '—',
+              estado:    p.estado    ?? '—',
+            }))
+          )
+        )
+        .catch((e) => console.error('PrestamosIndex:', e))
+    }, [])
+  )
 
   return (
     <View style={styles.container}>
@@ -104,16 +125,22 @@ export default function PrestamosIndex() {
         </View>
 
         {/* Filas de datos */}
-        {/* TODO: conectar a servidor */}
-        {PRESTAMOS.map((row, i) => (
-          <View key={i} style={styles.tableRow}>
-            {COLS.map((col) => (
-              <View key={col.key} style={[styles.cellBox, { flex: col.flex }]}>
-                <Text style={styles.cellBoxText} numberOfLines={1}>{row[col.key]}</Text>
-              </View>
-            ))}
+        {prestamosActivos.length === 0 ? (
+          <View style={styles.emptyWrap}>
+            <MaterialIcons name="inbox" size={28} color={theme.colors.textReadOnly} />
+            <Text style={styles.emptyText}>Sin préstamos activos</Text>
           </View>
-        ))}
+        ) : (
+          prestamosActivos.map((row, i) => (
+            <View key={i} style={styles.tableRow}>
+              {COLS.map((col) => (
+                <View key={col.key} style={[styles.cellBox, { flex: col.flex }]}>
+                  <Text style={styles.cellBoxText} numberOfLines={1}>{row[col.key]}</Text>
+                </View>
+              ))}
+            </View>
+          ))
+        )}
 
       </View>
 
@@ -251,5 +278,15 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.85)',
     fontSize: 12,
     fontWeight: '500',
+  },
+  emptyWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  emptyText: {
+    color: theme.colors.textReadOnly,
+    fontSize: 13,
   },
 })
