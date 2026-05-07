@@ -2,7 +2,7 @@ import { db } from '@/lib/firebase'
 import {
   collection, getDocs, setDoc,
   query, orderBy, limit,
-  doc, getDoc,
+  doc, getDoc, updateDoc,
 } from 'firebase/firestore'
 
 /**
@@ -40,6 +40,15 @@ export const obtenerLectoresRecientes = async (): Promise<any[]> => {
  * Busca un lector por su ID de documento en Firestore.
  * Retorna null si no existe.
  */
+export const actualizarLector = async (idLector: string, datos: any): Promise<void> => {
+  try {
+    await updateDoc(doc(db, 'lectores', idLector), datos)
+  } catch (error) {
+    console.error('actualizarLector:', error)
+    throw error
+  }
+}
+
 export const buscarLectorPorId = async (id: string): Promise<any | null> => {
   try {
     const ref = doc(db, 'lectores', id)

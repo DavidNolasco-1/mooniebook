@@ -1,10 +1,11 @@
-import { useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { useState, useEffect } from 'react'
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { auth } from '@/lib/firebase'
 import { theme } from '@/styles/theme'
 import { GlassInput } from '@/components/GlassInput'
+import { buscarLectorPorId, actualizarLector } from '@/services/LectoresService'
 
 // ─── Estilos compartidos ──────────────────────────────────────────────────────
 
@@ -19,13 +20,40 @@ const GLASS = {
 export default function LectoresModificar() {
   const router = useRouter()
 
-  const [correo,       setCorreo]       = useState('EithanNajid@gmail.com')
-  const [estadoLector, setEstadoLector] = useState('Habilitado')
+  const [idLector,     setIdLector]     = useState('')
+  const [correo,       setCorreo]       = useState('')
+  const [estadoLector, setEstadoLector] = useState('')
+  const [encontrado,   setEncontrado]   = useState(false)
 
   const personaCargo = auth.currentUser?.displayName ?? 'Emily Dannae'
 
-  const handleActualizar = () => {
-    console.log({ idLector: 'L-025', correo, estadoLector, personaCargo })
+  useEffect(() => {
+    if (!idLector.trim()) { setCorreo(''); setEstadoLector(''); setEncontrado(false); return }
+    buscarLectorPorId(idLector.trim())
+      .then((lector) => {
+        if (!lector) { setCorreo(''); setEstadoLector(''); setEncontrado(false); return }
+        setCorreo(lector.correo ?? lector.correo_electronico ?? '')
+        setEstadoLector(lector.estado ?? '')
+        setEncontrado(true)
+      })
+      .catch(() => { setEncontrado(false) })
+  }, [idLector])
+
+  const handleActualizar = async () => {
+    if (!idLector.trim()) {
+      Alert.alert('Campo requerido', 'Ingresa el ID del lector.')
+      return
+    }
+    try {
+      await actualizarLector(idLector.trim(), { correo, estado: estadoLector })
+      Alert.alert('Éxito', 'Datos del lector actualizados correctamente.')
+      setIdLector('')
+      setCorreo('')
+      setEstadoLector('')
+      setEncontrado(false)
+    } catch (error: any) {
+      Alert.alert('Error', error?.message ?? 'No se pudo actualizar el lector.')
+    }
   }
 
   return (
@@ -58,13 +86,18 @@ export default function LectoresModificar() {
 
           {/* ── Sección superior: avatar + búsqueda ── */}
           <View style={styles.topSection}>
-            <MaterialIcons name="account-circle" size={100} color="rgba(255,255,255,0.55)" />
-            <View style={styles.idRow}>
-              <Text style={styles.idLabel}>ID Lector</Text>
-              <MaterialIcons name="search" size={18} color="rgba(255,255,255,0.45)" />
-            </View>
-            <View style={styles.idPill}>
-              <Text style={styles.idPillText}>L-025</Text>
+            <MaterialIcons
+              name="account-circle"
+              size={100}
+              color={encontrado ? theme.colors.statusHabilitado : 'rgba(255,255,255,0.55)'}
+            />
+            <View style={styles.idInputWrap}>
+              <GlassInput
+                label="ID Lector"
+                value={idLector}
+                onChangeText={setIdLector}
+                placeholder="Ej. L-001"
+              />
             </View>
           </View>
 
@@ -108,7 +141,8 @@ export default function LectoresModificar() {
               <Text style={styles.btnCancelText}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.btnPrimary}
+              style={[styles.btnPrimary, !encontrado && styles.btnDisabled]}
+              disabled={!encontrado}
               onPress={handleActualizar}
               activeOpacity={0.85}
             >
@@ -189,32 +223,10 @@ const styles = StyleSheet.create({
   /* ── Sección superior ────────────────────────────────────────────────── */
   topSection: {
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
-  idRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 4,
-  },
-  idLabel: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  idPill: {
-    backgroundColor: theme.colors.inputBackground,
-    borderRadius: 100,
-    paddingHorizontal: 20,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-  },
-  idPillText: {
-    color: theme.colors.textEditable,
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+  idInputWrap: {
+    width: '55%',
   },
 
   /* ── Formulario ──────────────────────────────────────────────────────── */
@@ -263,5 +275,8 @@ const styles = StyleSheet.create({
     color: theme.colors.textEditable,
     fontSize: 14,
     fontWeight: '700',
+  },
+  btnDisabled: {
+    opacity: 0.45,
   },
 })
