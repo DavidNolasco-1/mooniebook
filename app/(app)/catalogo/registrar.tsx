@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image, Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { auth } from '@/lib/firebase'
 import { theme } from '@/styles/theme'
 import { GlassInput } from '@/components/GlassInput'
+import { registrarLibro } from '@/services/CatalogoService'
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
@@ -62,17 +63,21 @@ export default function CatalogoRegistrar() {
     }
   }
 
-  const handleRegistrar = () => {
+  const handleRegistrar = async () => {
     if (!titulo.trim() || !autor.trim() || !ejemplares.trim()) {
       setError('Título, Autor y Número de ejemplares son obligatorios.')
       return
     }
     setError('')
-    console.log({
-      isbn, titulo, autor, editorial,
-      fechaPublicacion, ejemplares,
-      categoria, portadaFrente, portadaReverso,
-    })
+    try {
+      const datos = { titulo, autor, editorial, fechaPublicacion, ejemplares, categoria }
+      await registrarLibro(datos, isbn)
+      setIsbn(''); setTitulo(''); setAutor('')
+      setEditorial(''); setFechaPublicacion(''); setEjemplares(''); setCategoria('')
+      Alert.alert('Éxito', 'Libro registrado en el catálogo')
+    } catch {
+      Alert.alert('Error', 'No se pudo registrar el libro')
+    }
   }
 
   return (
