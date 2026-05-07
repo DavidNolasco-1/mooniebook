@@ -6,7 +6,7 @@ import { collection, getDocs, setDoc, doc, getDoc } from 'firebase/firestore'
  */
 export const registrarLibro = async (datos: any, isbn: string): Promise<void> => {
   try {
-    await setDoc(doc(db, 'libros', isbn), { ...datos, isbn })
+    await setDoc(doc(db, 'libros', isbn), { ...datos, isbn, ejemplares: Number(datos.ejemplares) })
   } catch (error) {
     console.error('registrarLibro:', error)
     throw error

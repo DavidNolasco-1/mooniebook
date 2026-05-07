@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
-import { auth } from '@/lib/firebase'
+import { auth, db } from '@/lib/firebase'
+import { getDoc, doc } from 'firebase/firestore'
 import { theme } from '@/styles/theme'
 import { GlassInput } from '@/components/GlassInput'
 import { registrarPrestamo } from '@/services/PrestamosService'
@@ -20,13 +21,32 @@ const GLASS = {
 export default function PrestamosRegistrar() {
   const router = useRouter()
 
-  const [estadoLector]           = useState('Habilitado')
-  const [estadoLibro]            = useState('No Disponible')
-  const [isbn,       setIsbn]    = useState('')
-  const [idLector,   setIdLector] = useState('')
+  const [estadoLector,  setEstadoLector] = useState('')
+  const [estadoLibro,   setEstadoLibro]  = useState('')
+  const [isbn,          setIsbn]         = useState('')
+  const [idLector,      setIdLector]     = useState('')
 
   const personaCargo = auth.currentUser?.displayName ?? 'Emily Dannae'
-  const isDisabled   = estadoLibro === 'No Disponible' || estadoLector === 'Suspendido'
+  const isDisabled   = estadoLibro !== 'Disponible' || estadoLector !== 'Habilitado'
+
+  useEffect(() => {
+    if (!idLector.trim()) { setEstadoLector(''); return }
+    setEstadoLector('Buscando...')
+    getDoc(doc(db, 'lectores', idLector.trim()))
+      .then((snap) => setEstadoLector(snap.exists() ? snap.data().estado : 'No encontrado'))
+      .catch(() => setEstadoLector('Error'))
+  }, [idLector])
+
+  useEffect(() => {
+    if (!isbn.trim()) { setEstadoLibro(''); return }
+    setEstadoLibro('Buscando...')
+    getDoc(doc(db, 'libros', isbn.trim()))
+      .then((snap) => {
+        if (!snap.exists()) { setEstadoLibro('No encontrado'); return }
+        setEstadoLibro(Number(snap.data().ejemplares) > 0 ? 'Disponible' : 'No Disponible')
+      })
+      .catch(() => setEstadoLibro('Error'))
+  }, [isbn])
 
   const hoy          = new Date()
   const entrega      = new Date(hoy.getTime())
