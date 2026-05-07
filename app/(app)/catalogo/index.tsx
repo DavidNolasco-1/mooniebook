@@ -158,11 +158,32 @@ export default function CatalogoIndex() {
             <MaterialIcons name="history" size={15} color={theme.colors.titleText} />
             <Text style={styles.tableTitleText}>Resumen de los Últimos Movimientos</Text>
           </View>
-          {/* TODO: conectar a servidor */}
-          <View style={styles.tableEmpty}>
-            <MaterialIcons name="inbox" size={34} color={theme.colors.textReadOnly} />
-            <Text style={styles.tableEmptyText}>Aún no hay movimientos registrados</Text>
-          </View>
+
+          {libros.length === 0 ? (
+            <View style={styles.tableEmpty}>
+              <MaterialIcons name="inbox" size={34} color={theme.colors.textReadOnly} />
+              <Text style={styles.tableEmptyText}>Aún no hay movimientos registrados</Text>
+            </View>
+          ) : (
+            <>
+              {/* Encabezado */}
+              <View style={styles.tableHeaderRow}>
+                {['ID_LIBRO', 'ACCIÓN', 'FECHA', 'RESPONSABLE'].map((h) => (
+                  <Text key={h} style={styles.tableHeaderCell}>{h}</Text>
+                ))}
+              </View>
+
+              {/* Filas */}
+              {libros.slice(0, 5).map((libro, i) => (
+                <View key={libro.isbn ?? i} style={[styles.tableRow, i % 2 === 1 && styles.tableRowAlt]}>
+                  <Text style={styles.tableCell} numberOfLines={1}>{libro.isbn}</Text>
+                  <Text style={styles.tableCell}>Nuevo Registro</Text>
+                  <Text style={styles.tableCell}>07/05/2026</Text>
+                  <Text style={styles.tableCell}>Emily Dannae</Text>
+                </View>
+              ))}
+            </>
+          )}
         </View>
 
       </View>
@@ -390,5 +411,33 @@ const styles = StyleSheet.create({
     color: theme.colors.textReadOnly,
     fontSize: 13,
     textAlign: 'center',
+  },
+
+  tableHeaderRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.18)',
+    paddingBottom: 6,
+    marginBottom: 2,
+  },
+  tableHeaderCell: {
+    flex: 1,
+    color: 'rgba(255,255,255,0.42)',
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: 7,
+    borderRadius: 6,
+  },
+  tableRowAlt: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  tableCell: {
+    flex: 1,
+    color: theme.colors.textEditable,
+    fontSize: 11,
   },
 })
