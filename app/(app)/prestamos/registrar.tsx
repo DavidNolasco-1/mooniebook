@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { auth } from '@/lib/firebase'
 import { theme } from '@/styles/theme'
 import { GlassInput } from '@/components/GlassInput'
+import { registrarPrestamo } from '@/services/PrestamosService'
 
 // ─── Estilos compartidos ──────────────────────────────────────────────────────
 
@@ -19,18 +20,35 @@ const GLASS = {
 export default function PrestamosRegistrar() {
   const router = useRouter()
 
-  const [estadoLector] = useState('Habilitado')
-  const [estadoLibro]  = useState('No Disponible')
-  const [isbn,  setIsbn]  = useState('978-3-16-148410-0')
+  const [estadoLector]          = useState('Habilitado')
+  const [estadoLibro]           = useState('No Disponible')
+  const [isbn,      setIsbn]    = useState('978-3-16-148410-0')
+  const [idLector,  setIdLector] = useState('L-036')
 
   const personaCargo = auth.currentUser?.displayName ?? 'Emily Dannae'
   const isDisabled   = estadoLibro === 'No Disponible' || estadoLector === 'Suspendido'
 
-  const handleConfirmar = () => {
-    console.log({
-      idLector: 'L-036', isbn, estadoLector, estadoLibro,
-      fechaSalida: '30/04/2026', fechaEntrega: '28/05/2026',
-    })
+  const handleConfirmar = async () => {
+    if (!idLector.trim() || !isbn.trim()) {
+      Alert.alert('Campos requeridos', 'El ID de lector y el ISBN no pueden estar vacíos.')
+      return
+    }
+
+    try {
+      const nuevoPrestamo = {
+        idLector,
+        isbn,
+        estado: 'Activo',
+        fechaSalida: new Date().toISOString(),
+        responsable: personaCargo,
+      }
+      await registrarPrestamo(nuevoPrestamo)
+      setIdLector('')
+      setIsbn('')
+      Alert.alert('Éxito', 'Préstamo autorizado y registrado')
+    } catch {
+      Alert.alert('Error', 'No se pudo registrar el préstamo. Intenta de nuevo.')
+    }
   }
 
   return (
@@ -76,7 +94,7 @@ export default function PrestamosRegistrar() {
             </View>
             <Text style={styles.idLabel}>ID Lector</Text>
             <View style={styles.idPill}>
-              <Text style={styles.idPillText}>L-036</Text>
+              <Text style={styles.idPillText}>{idLector || '—'}</Text>
             </View>
           </View>
 
