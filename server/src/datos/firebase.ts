@@ -1,8 +1,9 @@
-import * as admin from 'firebase-admin'
+import { initializeApp, cert } from 'firebase-admin/app'
+import { getFirestore } from 'firebase-admin/firestore'
 import serviceAccount from '../../serviceAccountKey.json' with { type: 'json' }
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+initializeApp({
+  credential: cert(serviceAccount as unknown as { projectId: string; clientEmail: string; privateKey: string }),
 })
 
-export const db = admin.firestore()
+export const db = getFirestore()
