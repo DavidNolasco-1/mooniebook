@@ -9,17 +9,18 @@ export type GlassInputProps = {
   editable?: boolean
   hint?: string
   keyboardType?: 'default' | 'numeric'
+  alert?: boolean
 }
 
 export function GlassInput({
   label, value, onChangeText, placeholder,
-  editable = true, hint, keyboardType = 'default',
+  editable = true, hint, keyboardType = 'default', alert = false,
 }: GlassInputProps) {
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={[styles.input, !editable && styles.readOnly]}
+        style={[styles.input, !editable && styles.readOnly, alert && styles.alertInput]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder ?? label}
@@ -53,6 +54,11 @@ const styles = StyleSheet.create({
   },
   readOnly: {
     color: theme.colors.textReadOnly,
+  },
+  alertInput: {
+    backgroundColor: 'rgba(239,68,68,0.22)',
+    borderColor: 'rgba(239,68,68,0.55)',
+    color: theme.colors.textEditable,
   },
   hint: {
     color: 'rgba(255,255,255,0.3)',
