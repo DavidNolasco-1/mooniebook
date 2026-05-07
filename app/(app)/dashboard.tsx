@@ -1,8 +1,10 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useState, useCallback } from 'react'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
+import { useRouter, useFocusEffect } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { theme } from '@/styles/theme'
-import { auth } from '@/lib/firebase'
+import { auth, db } from '@/lib/firebase'
+import { getCountFromServer, collection, query, where } from 'firebase/firestore'
 
 // ─── Datos estáticos ────────────────────────────────────────────────────────
 
@@ -80,6 +82,29 @@ export default function Dashboard() {
   const router = useRouter()
   const displayName = auth.currentUser?.displayName ?? 'Bibliotecario'
 
+  const [totalLibros,       setTotalLibros]       = useState<number | null>(null)
+  const [totalLectores,     setTotalLectores]     = useState<number | null>(null)
+  const [prestamosActivos,  setPrestamosActivos]  = useState<number | null>(null)
+
+  useFocusEffect(
+    useCallback(() => {
+      Promise.all([
+        getCountFromServer(collection(db, 'libros')),
+        getCountFromServer(collection(db, 'lectores')),
+        getCountFromServer(query(collection(db, 'prestamos'), where('estado', '==', 'Activo'))),
+      ])
+        .then(([librosSnap, lectoresSnap, prestamosSnap]) => {
+          setTotalLibros(librosSnap.data().count)
+          setTotalLectores(lectoresSnap.data().count)
+          setPrestamosActivos(prestamosSnap.data().count)
+        })
+        .catch((e) => console.error('Dashboard metrics:', e))
+    }, [])
+  )
+
+  // Métricas en el mismo orden que MODULES
+  const METRICAS: (number | null)[] = [totalLibros, totalLectores, prestamosActivos]
+
   return (
     <View style={styles.container}>
 
@@ -103,14 +128,18 @@ export default function Dashboard() {
 
         {/* Fila superior: 3 tarjetas de módulo */}
         <View style={styles.topRow}>
-          {MODULES.map((mod) => (
+          {MODULES.map((mod, idx) => (
             <TouchableOpacity
               key={mod.route}
               style={[styles.moduleCard, { backgroundColor: mod.cardColor }]}
               onPress={() => router.push(mod.route as any)}
               activeOpacity={0.82}
             >
-              <Text style={styles.moduleNum}>{mod.num}</Text>
+              {METRICAS[idx] === null ? (
+                <ActivityIndicator size="small" color="rgba(255,255,255,0.35)" style={{ alignSelf: 'flex-start' }} />
+              ) : (
+                <Text style={styles.moduleNum}>{METRICAS[idx]}</Text>
+              )}
               <View style={styles.moduleIconWrap}>
                 <MaterialIcons name={mod.icon} size={34} color="rgba(255,255,255,0.88)" />
               </View>
