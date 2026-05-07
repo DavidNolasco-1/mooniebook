@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { auth } from '@/lib/firebase'
 import { theme } from '@/styles/theme'
 import { GlassInput } from '@/components/GlassInput'
+import { registrarLector } from '@/services/LectoresService'
 
 // ─── Estilos compartidos ──────────────────────────────────────────────────────
 
@@ -23,13 +24,20 @@ export default function LectoresRegistrar() {
 
   const personaCargo = auth.currentUser?.displayName ?? 'Emily Dannae'
 
-  const handleRegistrar = () => {
+  const handleRegistrar = async () => {
     if (!correo.trim()) {
       setError('El correo del lector es obligatorio.')
       return
     }
     setError('')
-    console.log({ idLector: 'L-025', correo, personaCargo, estado: 'Habilitado' })
+    try {
+      const nuevoLector = { correo, estado: 'Habilitado', responsable: personaCargo }
+      const idGenerado = await registrarLector(nuevoLector)
+      setCorreo('')
+      Alert.alert('Éxito', 'Lector registrado con ID: ' + idGenerado)
+    } catch {
+      Alert.alert('Error', 'No se pudo registrar el lector')
+    }
   }
 
   return (
