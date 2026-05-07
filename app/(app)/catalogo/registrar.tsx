@@ -1,13 +1,11 @@
 import { useState } from 'react'
-import {
-  View, Text, TouchableOpacity, ScrollView,
-  StyleSheet, TextInput, Image,
-} from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { auth } from '@/lib/firebase'
 import { theme } from '@/styles/theme'
+import { GlassInput } from '@/components/GlassInput'
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
@@ -15,69 +13,6 @@ function fechaHoy(): string {
   const d = new Date()
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
 }
-
-// ─── GlassInput ──────────────────────────────────────────────────────────────
-
-type GlassInputProps = {
-  label: string
-  value: string
-  onChangeText?: (t: string) => void
-  placeholder?: string
-  editable?: boolean
-  hint?: string
-  keyboardType?: 'default' | 'numeric'
-}
-
-function GlassInput({
-  label, value, onChangeText, placeholder,
-  editable = true, hint, keyboardType = 'default',
-}: GlassInputProps) {
-  return (
-    <View style={iStyles.wrapper}>
-      <Text style={iStyles.label}>{label}</Text>
-      <TextInput
-        style={[iStyles.input, !editable && iStyles.readOnly]}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder ?? label}
-        placeholderTextColor="rgba(255,255,255,0.28)"
-        editable={editable}
-        keyboardType={keyboardType}
-      />
-      {hint ? <Text style={iStyles.hint}>{hint}</Text> : null}
-    </View>
-  )
-}
-
-const iStyles = StyleSheet.create({
-  wrapper: { gap: 4 },
-  label: {
-    color: 'rgba(255,255,255,0.55)',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  input: {
-    backgroundColor: theme.colors.inputBackground,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    color: theme.colors.textEditable,
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-  },
-  readOnly: {
-    color: theme.colors.textReadOnly,
-  },
-  hint: {
-    color: 'rgba(255,255,255,0.3)',
-    fontSize: 10,
-    paddingHorizontal: 2,
-    lineHeight: 14,
-  },
-})
 
 // ─── Estilos compartidos ──────────────────────────────────────────────────────
 
