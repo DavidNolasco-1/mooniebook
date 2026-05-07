@@ -132,7 +132,7 @@ export default function PrestamosDevolver() {
                   key={i}
                   style={[styles.tableRow, finalizado && styles.rowFinalizado]}
                   disabled={finalizado}
-                  onPress={() => console.log('Devolviendo prestamo: ', row.idPrestamo)}
+                  onPress={() => router.push('/(app)/prestamos/confirmar-devolucion' as any)}
                   activeOpacity={0.75}
                 >
                   {COLS.map((col) => {
