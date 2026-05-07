@@ -1,18 +1,9 @@
+import { useState, useCallback } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useRouter, useFocusEffect } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { theme } from '@/styles/theme'
-
-// ─── Datos mock ───────────────────────────────────────────────────────────────
-
-type MovimientoLector = { id: string; accion: string; fecha: string; responsable: string }
-
-// TODO: conectar a servidor
-const MOVIMIENTOS: MovimientoLector[] = [
-  { id: 'L_001', accion: 'Nuevo Registro', fecha: '14/04/2026', responsable: 'Emily Dannae.' },
-  { id: 'L_018', accion: 'Modificación',   fecha: '20/04/2026', responsable: 'Emily Dannae.' },
-  { id: 'L_024', accion: 'Modificación',   fecha: '05/04/2026', responsable: 'Emily Dannae.' },
-]
+import { obtenerLectoresRecientes } from '@/services/LectoresService'
 
 const COLS: { key: keyof MovimientoLector; header: string; flex: number }[] = [
   { key: 'id',          header: 'ID_LECTOR',  flex: 2 },
@@ -32,7 +23,16 @@ const GLASS = {
 // ─── Componente ──────────────────────────────────────────────────────────────
 
 export default function LectoresIndex() {
-  const router = useRouter()
+  const router  = useRouter()
+  const [lectores, setLectores] = useState<any[]>([])
+
+  useFocusEffect(
+    useCallback(() => {
+      obtenerLectoresRecientes()
+        .then(setLectores)
+        .catch((e) => console.error('LectoresIndex:', e))
+    }, [])
+  )
 
   return (
     <View style={styles.container}>
@@ -103,15 +103,21 @@ export default function LectoresIndex() {
           ))}
         </View>
 
-        {/* Filas de datos */}
-        {/* TODO: conectar a servidor */}
-        {MOVIMIENTOS.map((row, i) => (
+        {/* Filas de datos — Firestore */}
+        {lectores.map((lector, i) => (
           <View key={i} style={styles.tableRow}>
-            {COLS.map((col) => (
-              <View key={col.key} style={[styles.cellBox, { flex: col.flex }]}>
-                <Text style={styles.cellBoxText} numberOfLines={1}>{row[col.key]}</Text>
-              </View>
-            ))}
+            <View style={[styles.cellBox, { flex: COLS[0].flex }]}>
+              <Text style={styles.cellBoxText} numberOfLines={1}>{lector.id}</Text>
+            </View>
+            <View style={[styles.cellBox, { flex: COLS[1].flex }]}>
+              <Text style={styles.cellBoxText}>Nuevo Registro</Text>
+            </View>
+            <View style={[styles.cellBox, { flex: COLS[2].flex }]}>
+              <Text style={styles.cellBoxText}>07/05/2026</Text>
+            </View>
+            <View style={[styles.cellBox, { flex: COLS[3].flex }]}>
+              <Text style={styles.cellBoxText} numberOfLines={1}>{lector.responsable ?? '—'}</Text>
+            </View>
           </View>
         ))}
 
