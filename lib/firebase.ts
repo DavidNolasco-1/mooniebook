@@ -1,7 +1,6 @@
 import { initializeApp } from 'firebase/app';
-// 1. Importamos initializeAuth y getReactNativePersistence
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
-// 2. Importamos nuestra nueva librería de almacenamiento
+import { getFirestore } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
@@ -16,7 +15,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// 3. Inicializamos la autenticación conectándola con AsyncStorage
 export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage)
 });
+
+export const db = getFirestore(app);
