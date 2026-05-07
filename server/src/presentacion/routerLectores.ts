@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import type { ModuloLectores } from '../aplicacion/ModuloLectores.js'
-import type { IRepositorioLectores } from '../dominio/interfaces/IRepositorioLectores.js'
 
 function handleError(res: Response, err: unknown): void {
   if (err instanceof Error) {
@@ -11,10 +10,7 @@ function handleError(res: Response, err: unknown): void {
   }
 }
 
-export function routerLectores(
-  modLectores: ModuloLectores,
-  repoLectores: IRepositorioLectores,
-): Router {
+export function routerLectores(modLectores: ModuloLectores): Router {
   const router = Router()
 
   // POST /lectores — registrar nuevo lector
@@ -23,20 +19,6 @@ export function routerLectores(
       const { correo } = req.body as { correo: string }
       const id = await modLectores.registrarLector(correo)
       res.status(201).json({ id })
-    } catch (err) {
-      handleError(res, err)
-    }
-  })
-
-  // GET /lectores/:id — consultar lector
-  router.get('/:id', async (req: Request, res: Response) => {
-    try {
-      const lector = await repoLectores.buscarPorId(req.params['id'] as string)
-      if (!lector) {
-        res.status(404).json({ error: 'LECTOR_NO_ENCONTRADO' })
-        return
-      }
-      res.json(lector)
     } catch (err) {
       handleError(res, err)
     }

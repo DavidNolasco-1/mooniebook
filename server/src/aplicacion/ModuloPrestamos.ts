@@ -24,6 +24,10 @@ export class ModuloPrestamos {
     private modPenalizaciones: ModuloPenalizaciones,
   ) {}
 
+  async obtenerTodos(): Promise<Prestamo[]> {
+    return this.repoPrestamos.obtenerTodos()
+  }
+
   async registrarPrestamo(id_lector: string, isbn: string): Promise<string> {
     // 1. Lector existe y tiene derecho
     const lector = await this.repoLectores.buscarPorId(id_lector)

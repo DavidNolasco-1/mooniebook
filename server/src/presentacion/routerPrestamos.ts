@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import type { ModuloPrestamos } from '../aplicacion/ModuloPrestamos.js'
-import type { IRepositorioPrestamos } from '../dominio/interfaces/IRepositorioPrestamos.js'
 
 function handleError(res: Response, err: unknown): void {
   if (err instanceof Error) {
@@ -11,10 +10,7 @@ function handleError(res: Response, err: unknown): void {
   }
 }
 
-export function routerPrestamos(
-  modPrestamos: ModuloPrestamos,
-  repoPrestamos: IRepositorioPrestamos,
-): Router {
+export function routerPrestamos(modPrestamos: ModuloPrestamos): Router {
   const router = Router()
 
   // POST /prestamos — registrar nuevo préstamo
@@ -31,22 +27,8 @@ export function routerPrestamos(
   // GET /prestamos — historial completo
   router.get('/', async (_req: Request, res: Response) => {
     try {
-      const prestamos = await repoPrestamos.obtenerTodos()
+      const prestamos = await modPrestamos.obtenerTodos()
       res.json(prestamos)
-    } catch (err) {
-      handleError(res, err)
-    }
-  })
-
-  // GET /prestamos/:id — consultar préstamo por ID
-  router.get('/:id', async (req: Request, res: Response) => {
-    try {
-      const prestamo = await repoPrestamos.buscarPorId(req.params['id'] as string)
-      if (!prestamo) {
-        res.status(404).json({ error: 'PRESTAMO_NO_ENCONTRADO' })
-        return
-      }
-      res.json(prestamo)
     } catch (err) {
       handleError(res, err)
     }
