@@ -34,6 +34,20 @@ export function routerPrestamos(modPrestamos: ModuloPrestamos): Router {
     }
   })
 
+  // GET /prestamos/:id — consultar préstamo por ID
+  router.get('/:id', async (req: Request, res: Response) => {
+    try {
+      const prestamo = await modPrestamos.buscarPorId(req.params['id'] as string)
+      if (!prestamo) {
+        res.status(404).json({ error: 'PRESTAMO_NO_ENCONTRADO' })
+        return
+      }
+      res.json(prestamo)
+    } catch (err) {
+      handleError(res, err)
+    }
+  })
+
   // POST /prestamos/:id/devolucion — registrar devolución
   router.post('/:id/devolucion', async (req: Request, res: Response) => {
     try {

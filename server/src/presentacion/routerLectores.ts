@@ -24,6 +24,20 @@ export function routerLectores(modLectores: ModuloLectores): Router {
     }
   })
 
+  // GET /lectores/:id — consultar lector
+  router.get('/:id', async (req: Request, res: Response) => {
+    try {
+      const lector = await modLectores.buscarPorId(req.params['id'] as string)
+      if (!lector) {
+        res.status(404).json({ error: 'LECTOR_NO_ENCONTRADO' })
+        return
+      }
+      res.json(lector)
+    } catch (err) {
+      handleError(res, err)
+    }
+  })
+
   // PUT /lectores/:id — modificar correo
   router.put('/:id', async (req: Request, res: Response) => {
     try {

@@ -24,6 +24,10 @@ export class ModuloPrestamos {
     private modPenalizaciones: ModuloPenalizaciones,
   ) {}
 
+  async buscarPorId(id: string): Promise<Prestamo | null> {
+    return this.repoPrestamos.buscarPorId(id)
+  }
+
   async obtenerTodos(): Promise<Prestamo[]> {
     return this.repoPrestamos.obtenerTodos()
   }
