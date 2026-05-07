@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput, Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { theme } from '@/styles/theme'
+import { procesarDevolucion } from '@/services/PrestamosService'
 
 // ─── Datos mock ───────────────────────────────────────────────────────────────
 
@@ -132,7 +133,28 @@ export default function PrestamosDevolver() {
                   key={i}
                   style={[styles.tableRow, finalizado && styles.rowFinalizado]}
                   disabled={finalizado}
-                  onPress={() => router.push('/(app)/prestamos/confirmar-devolucion' as any)}
+                  onPress={() => {
+                    Alert.alert(
+                      'Confirmar Devolución',
+                      `¿Registrar la devolución del préstamo ${row.idPrestamo}?`,
+                      [
+                        { text: 'Cancelar', style: 'cancel' },
+                        {
+                          text: 'Confirmar',
+                          onPress: async () => {
+                            try {
+                              await procesarDevolucion(row.idPrestamo, row.isbn)
+                              Alert.alert('Éxito', 'Devolución registrada correctamente.', [
+                                { text: 'OK', onPress: () => router.back() },
+                              ])
+                            } catch (error: any) {
+                              Alert.alert('Error', error?.message ?? 'No se pudo procesar la devolución.')
+                            }
+                          },
+                        },
+                      ]
+                    )
+                  }}
                   activeOpacity={0.75}
                 >
                   {COLS.map((col) => {
