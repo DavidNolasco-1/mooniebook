@@ -27,8 +27,7 @@ export const registrarLector = async (datos: any): Promise<string> => {
  */
 export const obtenerLectoresRecientes = async (): Promise<any[]> => {
   try {
-    // TODO: cambiar a orderBy('creadoEn', 'desc') cuando se añada timestamp al schema
-    const q = query(collection(db, 'lectores'), orderBy('id', 'desc'), limit(5))
+    const q = query(collection(db, 'lectores'), orderBy('idLector', 'desc'), limit(5))
     const snapshot = await getDocs(q)
     return snapshot.docs.map((snap) => ({ id: snap.id, ...snap.data() }))
   } catch (error) {
