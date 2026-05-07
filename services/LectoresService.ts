@@ -1,17 +1,20 @@
 import { db } from '@/lib/firebase'
 import {
-  collection, addDoc, getDocs,
+  collection, getDocs, setDoc,
   query, orderBy, limit,
   doc, getDoc,
 } from 'firebase/firestore'
 
 /**
- * Añade un nuevo lector a Firestore y retorna el ID de documento generado.
+ * Registra un lector con ID secuencial L-001, L-002, etc.
+ * Cuenta los documentos existentes para calcular el siguiente número.
  */
 export const registrarLector = async (datos: any): Promise<string> => {
   try {
-    const ref = await addDoc(collection(db, 'lectores'), datos)
-    return ref.id
+    const snapshot = await getDocs(collection(db, 'lectores'))
+    const nuevoId = `L-${String(snapshot.size + 1).padStart(3, '0')}`
+    await setDoc(doc(db, 'lectores', nuevoId), { ...datos, idLector: nuevoId })
+    return nuevoId
   } catch (error) {
     console.error('registrarLector:', error)
     throw error
