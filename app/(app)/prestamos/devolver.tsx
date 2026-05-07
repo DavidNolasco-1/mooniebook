@@ -30,10 +30,11 @@ const formatFecha = (iso: string) => {
 
 function estadoStyle(estado: string) {
   switch (estado) {
-    case 'Activo':    return { bg: 'rgba(245,158,11,0.22)', border: 'rgba(245,158,11,0.5)', text: theme.colors.statusActivo    }
-    case 'Atrasado':  return { bg: 'rgba(239,68,68,0.22)',  border: 'rgba(239,68,68,0.5)',  text: theme.colors.statusAtrasado  }
+    case 'Activo':     return { bg: 'rgba(245,158,11,0.22)', border: 'rgba(245,158,11,0.5)', text: theme.colors.statusActivo    }
+    case 'Atrasado':   return { bg: 'rgba(239,68,68,0.22)',  border: 'rgba(239,68,68,0.5)',  text: theme.colors.statusAtrasado  }
+    case 'Devuelto':
     case 'Finalizado': return { bg: 'rgba(34,197,94,0.18)', border: 'rgba(34,197,94,0.4)',  text: theme.colors.statusFinalizado }
-    default:          return { bg: 'rgba(45,83,134,0.65)',  border: 'rgba(255,255,255,0.1)', text: theme.colors.textEditable   }
+    default:           return { bg: 'rgba(45,83,134,0.65)',  border: 'rgba(255,255,255,0.1)', text: theme.colors.textEditable  }
   }
 }
 
@@ -58,7 +59,6 @@ export default function PrestamosDevolver() {
         .then((data) =>
           setPrestamos(
             data
-              .filter((p) => p.estado === 'Activo')
               .map((p) => ({
                 idDoc:       p.id,
                 idPrestamo:  (p.id ?? '').substring(0, 6),
@@ -144,13 +144,13 @@ export default function PrestamosDevolver() {
             </View>
           ) : (
             prestamosFiltrados.map((row, i) => {
-              const finalizado = row.estado === 'Finalizado'
+              const bloqueado = row.estado !== 'Activo'
               return (
                 <TouchableOpacity
                   key={i}
-                  style={[styles.tableRow, finalizado && styles.rowFinalizado]}
-                  disabled={finalizado}
-                  onPress={() => {
+                  style={[styles.tableRow, bloqueado && styles.rowFinalizado]}
+                  disabled={bloqueado}
+                  onPress={row.estado === 'Activo' ? () => {
                     Alert.alert(
                       'Confirmar Devolución',
                       `¿Registrar la devolución del préstamo ${row.idPrestamo}?`,
@@ -171,7 +171,7 @@ export default function PrestamosDevolver() {
                         },
                       ]
                     )
-                  }}
+                  } : undefined}
                   activeOpacity={0.75}
                 >
                   {COLS.map((col) => {
