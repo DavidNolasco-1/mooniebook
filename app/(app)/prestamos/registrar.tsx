@@ -20,13 +20,20 @@ const GLASS = {
 export default function PrestamosRegistrar() {
   const router = useRouter()
 
-  const [estadoLector]          = useState('Habilitado')
-  const [estadoLibro]           = useState('No Disponible')
-  const [isbn,      setIsbn]    = useState('978-3-16-148410-0')
-  const [idLector,  setIdLector] = useState('L-036')
+  const [estadoLector]           = useState('Habilitado')
+  const [estadoLibro]            = useState('No Disponible')
+  const [isbn,       setIsbn]    = useState('')
+  const [idLector,   setIdLector] = useState('')
 
   const personaCargo = auth.currentUser?.displayName ?? 'Emily Dannae'
   const isDisabled   = estadoLibro === 'No Disponible' || estadoLector === 'Suspendido'
+
+  const hoy          = new Date()
+  const entrega      = new Date(hoy.getTime())
+  entrega.setDate(entrega.getDate() + 7)
+  const fmt          = (d: Date) => d.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const fechaSalidaDisplay  = fmt(hoy)
+  const fechaEntregaDisplay = fmt(entrega)
 
   const handleConfirmar = async () => {
     if (!idLector.trim() || !isbn.trim()) {
@@ -104,6 +111,12 @@ export default function PrestamosRegistrar() {
             {/* Columna 1: datos del lector */}
             <View style={styles.formColumn}>
               <GlassInput
+                label="ID Lector"
+                value={idLector}
+                onChangeText={setIdLector}
+                placeholder="Ej. L-001"
+              />
+              <GlassInput
                 label="Estado del Lector"
                 value={estadoLector}
                 editable={false}
@@ -135,12 +148,12 @@ export default function PrestamosRegistrar() {
             <View style={styles.formColumn}>
               <GlassInput
                 label="Fecha de Salida"
-                value="30/04/2026"
+                value={fechaSalidaDisplay}
                 editable={false}
               />
               <GlassInput
                 label="Fecha de Entrega"
-                value="28/05/2026"
+                value={fechaEntregaDisplay}
                 editable={false}
               />
             </View>
