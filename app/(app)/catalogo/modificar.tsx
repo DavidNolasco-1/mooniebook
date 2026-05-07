@@ -1,10 +1,12 @@
-import { useState } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image } from 'react-native'
+import { useState, useEffect } from 'react'
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image, Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
+import { auth } from '@/lib/firebase'
 import { theme } from '@/styles/theme'
 import { GlassInput } from '@/components/GlassInput'
+import { buscarLibroPorIsbn, actualizarLibro } from '@/services/CatalogoService'
 
 // ─── Estilos compartidos ──────────────────────────────────────────────────────
 
@@ -19,18 +21,39 @@ const GLASS = {
 export default function CatalogoModificar() {
   const router = useRouter()
 
-  // ── Estados pre-cargados con libro dummy ──────────────────────────────────
-  const [isbn]                                    = useState('978-3-16-142460-0')
-  const [titulo,           setTitulo]             = useState('El Diario de Ana Frank')
-  const [autor,            setAutor]              = useState('Ana Frank')
-  const [editorial,        setEditorial]          = useState('Editores Mexicanos Unidos')
-  const [fechaPublicacion, setFechaPublicacion]   = useState('1 octubre 2021')
-  const [ejemplares,       setEjemplares]         = useState('10')
-  const [fechaRegistro]                           = useState('05/04/2026')
-  const [personaCargo]                            = useState('Emily Dannae.')
-  const [categoria,        setCategoria]          = useState('Drama')
-  const [portadaFrente,    setPortadaFrente]      = useState<string | null>(null)
-  const [portadaReverso,   setPortadaReverso]     = useState<string | null>(null)
+  const [isbn,             setIsbn]            = useState('')
+  const [titulo,           setTitulo]          = useState('')
+  const [autor,            setAutor]           = useState('')
+  const [editorial,        setEditorial]       = useState('')
+  const [fechaPublicacion, setFechaPublicacion] = useState('')
+  const [ejemplares,       setEjemplares]      = useState('')
+  const [categoria,        setCategoria]       = useState('')
+  const [encontrado,       setEncontrado]      = useState(false)
+  const [portadaFrente,    setPortadaFrente]   = useState<string | null>(null)
+  const [portadaReverso,   setPortadaReverso]  = useState<string | null>(null)
+
+  const personaCargo = auth.currentUser?.displayName ?? 'Emily Dannae'
+
+  useEffect(() => {
+    if (!isbn.trim()) {
+      setTitulo(''); setAutor(''); setEditorial('')
+      setFechaPublicacion(''); setEjemplares(''); setCategoria('')
+      setEncontrado(false)
+      return
+    }
+    buscarLibroPorIsbn(isbn.trim())
+      .then((libro) => {
+        if (!libro) { setEncontrado(false); return }
+        setTitulo(libro.titulo           ?? '')
+        setAutor(libro.autor             ?? '')
+        setEditorial(libro.editorial     ?? '')
+        setFechaPublicacion(libro.fechaPublicacion ?? '')
+        setEjemplares(String(libro.ejemplares ?? ''))
+        setCategoria(libro.categoria     ?? '')
+        setEncontrado(true)
+      })
+      .catch(() => setEncontrado(false))
+  }, [isbn])
 
   const abrirGaleria = async (lado: 'frente' | 'reverso') => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -45,13 +68,24 @@ export default function CatalogoModificar() {
     }
   }
 
-  const handleActualizar = () => {
-    console.log({
-      isbn, titulo, autor, editorial,
-      fechaPublicacion, ejemplares,
-      fechaRegistro, personaCargo, categoria,
-      portadaFrente, portadaReverso,
-    })
+  const handleActualizar = async () => {
+    if (!isbn.trim()) {
+      Alert.alert('Campo requerido', 'Ingresa un ISBN para buscar el libro.')
+      return
+    }
+    try {
+      await actualizarLibro(isbn.trim(), {
+        titulo, autor, editorial,
+        fechaPublicacion, categoria,
+        ejemplares: Number(ejemplares),
+      })
+      Alert.alert('Éxito', 'Libro actualizado correctamente.')
+      setIsbn(''); setTitulo(''); setAutor(''); setEditorial('')
+      setFechaPublicacion(''); setEjemplares(''); setCategoria('')
+      setEncontrado(false)
+    } catch (error: any) {
+      Alert.alert('Error', error?.message ?? 'No se pudo actualizar el libro.')
+    }
   }
 
   return (
@@ -90,8 +124,9 @@ export default function CatalogoModificar() {
               <GlassInput
                 label="ISBN"
                 value={isbn}
-                editable={false}
-                hint="El sistema validará automáticamente si el libro ya existe."
+                onChangeText={setIsbn}
+                placeholder="Ej. 978-0-000-00000-0"
+                hint="El sistema buscará automáticamente si el libro existe."
               />
               <GlassInput
                 label="Título"
@@ -128,11 +163,6 @@ export default function CatalogoModificar() {
 
             {/* ── Columna derecha ── */}
             <View style={styles.rightColumn}>
-              <GlassInput
-                label="Fecha de registro"
-                value={fechaRegistro}
-                editable={false}
-              />
               <GlassInput
                 label="Persona a cargo"
                 value={personaCargo}
@@ -183,7 +213,12 @@ export default function CatalogoModificar() {
           <TouchableOpacity style={styles.btnSave} onPress={() => router.back()} activeOpacity={0.8}>
             <Text style={styles.btnSaveText}>Guardar</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.btnPrimary} onPress={handleActualizar} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={[styles.btnPrimary, !encontrado && styles.btnDisabled]}
+            disabled={!encontrado}
+            onPress={handleActualizar}
+            activeOpacity={0.85}
+          >
             <MaterialIcons name="check" size={18} color="#fff" />
             <Text style={styles.btnPrimaryText}>Actualizar</Text>
           </TouchableOpacity>
@@ -335,5 +370,8 @@ const styles = StyleSheet.create({
     color: theme.colors.textEditable,
     fontSize: 14,
     fontWeight: '700',
+  },
+  btnDisabled: {
+    opacity: 0.45,
   },
 })

@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase'
-import { collection, getDocs, setDoc, doc, getDoc } from 'firebase/firestore'
+import { collection, getDocs, setDoc, doc, getDoc, updateDoc } from 'firebase/firestore'
 
 /**
  * Guarda un libro en Firestore usando el ISBN como ID de documento.
@@ -29,6 +29,15 @@ export const obtenerCatalogo = async (): Promise<any[]> => {
 /**
  * Busca un libro por ISBN (ID de documento). Retorna null si no existe.
  */
+export const actualizarLibro = async (isbn: string, datos: any): Promise<void> => {
+  try {
+    await updateDoc(doc(db, 'libros', isbn), { ...datos, ejemplares: Number(datos.ejemplares) })
+  } catch (error) {
+    console.error('actualizarLibro:', error)
+    throw error
+  }
+}
+
 export const buscarLibroPorIsbn = async (isbn: string): Promise<any | null> => {
   try {
     const snapshot = await getDoc(doc(db, 'libros', isbn))
