@@ -1,4 +1,4 @@
-import { EstadoLector } from '../enums/EstadoLector'
+import { EstadoLector } from '../enums/EstadoLector.js'
 
 export class Lector {
   id: string
@@ -22,7 +22,7 @@ export class Lector {
     const fecha = new Date()
     fecha.setDate(fecha.getDate() + dias)
     this.estado               = EstadoLector.Suspendido
-    this.fecha_fin_suspension = fecha.toISOString().split('T')[0]
+    this.fecha_fin_suspension = fecha.toISOString().split('T')[0] ?? null
   }
 
   habilitar(): void {

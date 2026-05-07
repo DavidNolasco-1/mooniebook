@@ -1,4 +1,4 @@
-import { EstadoPrestamo } from '../enums/EstadoPrestamo'
+import { EstadoPrestamo } from '../enums/EstadoPrestamo.js'
 
 export class Prestamo {
   identificador: string

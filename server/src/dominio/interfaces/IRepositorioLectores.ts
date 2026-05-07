@@ -1,4 +1,4 @@
-import { Lector } from '../entidades/Lector'
+import type { Lector } from '../entidades/Lector.js'
 
 export interface IRepositorioLectores {
   guardar(lector: Lector): Promise<void>

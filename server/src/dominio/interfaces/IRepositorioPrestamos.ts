@@ -1,4 +1,4 @@
-import { Prestamo } from '../entidades/Prestamo'
+import type { Prestamo } from '../entidades/Prestamo.js'
 
 export interface IRepositorioPrestamos {
   guardar(prestamo: Prestamo): Promise<void>
