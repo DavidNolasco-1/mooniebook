@@ -1,35 +1,30 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput, Alert } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useRouter, useFocusEffect } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { theme } from '@/styles/theme'
-import { procesarDevolucion } from '@/services/PrestamosService'
+import { procesarDevolucion, obtenerPrestamosRecientes } from '@/services/PrestamosService'
 
-// ─── Datos mock ───────────────────────────────────────────────────────────────
+// ─── Tipos y columnas ─────────────────────────────────────────────────────────
 
-type Prestamo = {
-  idPrestamo: string; idLector: string; isbn: string
-  estado: 'Activo' | 'Atrasado' | 'Finalizado'; fecha: string; bibliotecario: string
+type FilaDevolucion = {
+  idDoc: string; idPrestamo: string; idLector: string; isbn: string
+  estado: string; fecha: string; responsable: string
 }
 
-// TODO: conectar a servidor
-const HISTORIAL: Prestamo[] = [
-  { idPrestamo: 'P-001', idLector: 'L-001', isbn: '978-3-16-148410-0', estado: 'Activo',     fecha: '25/04/2026', bibliotecario: 'Emily Dannae.' },
-  { idPrestamo: 'P-002', idLector: 'L-018', isbn: '978-0-596-52068-7', estado: 'Atrasado',   fecha: '28/04/2026', bibliotecario: 'Emily Dannae.' },
-  { idPrestamo: 'P-003', idLector: 'L-022', isbn: '978-0-316-20128-4', estado: 'Finalizado', fecha: '30/04/2026', bibliotecario: 'Emily Dannae.' },
-  { idPrestamo: 'P-004', idLector: 'L-005', isbn: '978-1-491-95026-8', estado: 'Activo',     fecha: '01/05/2026', bibliotecario: 'Emily Dannae.' },
-  { idPrestamo: 'P-005', idLector: 'L-012', isbn: '978-0-201-63361-0', estado: 'Finalizado', fecha: '02/05/2026', bibliotecario: 'Emily Dannae.' },
-  { idPrestamo: 'P-006', idLector: 'L-033', isbn: '978-0-735-21932-0', estado: 'Atrasado',   fecha: '03/05/2026', bibliotecario: 'Emily Dannae.' },
+const COLS: { key: keyof FilaDevolucion; header: string; flex: number }[] = [
+  { key: 'idPrestamo',  header: 'ID Prestamo',  flex: 2 },
+  { key: 'idLector',   header: 'ID Lector',    flex: 2 },
+  { key: 'isbn',       header: 'ISBN',         flex: 4 },
+  { key: 'estado',     header: 'Estado',       flex: 2 },
+  { key: 'fecha',      header: 'Fecha',        flex: 2 },
+  { key: 'responsable', header: 'Responsable', flex: 3 },
 ]
 
-const COLS: { key: keyof Prestamo; header: string; flex: number }[] = [
-  { key: 'idPrestamo',   header: 'ID Prestamo',  flex: 2 },
-  { key: 'idLector',     header: 'ID Lector',    flex: 2 },
-  { key: 'isbn',         header: 'ISBN',         flex: 4 },
-  { key: 'estado',       header: 'Estado',       flex: 2 },
-  { key: 'fecha',        header: 'Fecha',        flex: 2 },
-  { key: 'bibliotecario', header: 'Bibliotecario', flex: 3 },
-]
+const formatFecha = (iso: string) => {
+  try { return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) }
+  catch { return iso }
+}
 
 // ─── Helper de colores por estado ────────────────────────────────────────────
 
@@ -54,12 +49,35 @@ const GLASS = {
 
 export default function PrestamosDevolver() {
   const router = useRouter()
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda,  setBusqueda]  = useState('')
+  const [prestamos, setPrestamos] = useState<FilaDevolucion[]>([])
 
-  const prestamosFiltrados = HISTORIAL.filter((p) => {
+  useFocusEffect(
+    useCallback(() => {
+      obtenerPrestamosRecientes()
+        .then((data) =>
+          setPrestamos(
+            data
+              .filter((p) => p.estado === 'Activo')
+              .map((p) => ({
+                idDoc:       p.id,
+                idPrestamo:  (p.id ?? '').substring(0, 6),
+                idLector:    p.idLector    ?? '—',
+                isbn:        p.isbn        ?? '—',
+                estado:      p.estado      ?? '—',
+                fecha:       p.fechaSalida ? formatFecha(p.fechaSalida) : '—',
+                responsable: p.responsable ?? '—',
+              }))
+          )
+        )
+        .catch((e) => console.error('PrestamosDevolver:', e))
+    }, [])
+  )
+
+  const prestamosFiltrados = prestamos.filter((p) => {
     const q = busqueda.toLowerCase().trim()
     if (!q) return true
-    return p.idLector.toLowerCase().includes(q) || p.idPrestamo.toLowerCase().includes(q)
+    return p.idLector.toLowerCase().includes(q) || p.isbn.toLowerCase().includes(q)
   })
 
   return (
@@ -119,7 +137,6 @@ export default function PrestamosDevolver() {
         </View>
 
         {/* Filas de datos */}
-        {/* TODO: conectar a servidor */}
         <ScrollView showsVerticalScrollIndicator={false}>
           {prestamosFiltrados.length === 0 ? (
             <View style={styles.emptyRow}>
@@ -143,7 +160,7 @@ export default function PrestamosDevolver() {
                           text: 'Confirmar',
                           onPress: async () => {
                             try {
-                              await procesarDevolucion(row.idPrestamo, row.isbn)
+                              await procesarDevolucion(row.idDoc, row.isbn)
                               Alert.alert('Éxito', 'Devolución registrada correctamente.', [
                                 { text: 'OK', onPress: () => router.back() },
                               ])
