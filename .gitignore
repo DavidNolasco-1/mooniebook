@@ -46,4 +46,5 @@ node_modules/
 google-services.json
 .expo/
 dist/
-server/serviceAccountKey.json
+server/serviceAccountKey.jsonCLAUDE.md
+.claude/
