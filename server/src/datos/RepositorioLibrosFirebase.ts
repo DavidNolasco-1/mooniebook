@@ -16,6 +16,23 @@ export class RepositorioLibrosFirebase implements IRepositorioLibros {
     })
   }
 
+  async obtenerTodos(): Promise<Libro[]> {
+    const snap = await db.collection('libros').get()
+    return snap.docs.map((doc) => {
+      const d = doc.data()
+      return new Libro(
+        d['isbn']                ?? doc.id,
+        d['titulo']              ?? '',
+        d['autor']               ?? '',
+        d['editorial']           ?? '',
+        d['categoria']           ?? '',
+        d['fecha_publicacion']   ?? '',
+        d['cantidad_total']      ?? 0,
+        d['cantidad_disponible'] ?? d['ejemplares'] ?? 0,
+      )
+    })
+  }
+
   async buscarPorIsbn(isbn: string): Promise<Libro | null> {
     const snap = await db.collection('libros').doc(isbn).get()
     if (!snap.exists) return null

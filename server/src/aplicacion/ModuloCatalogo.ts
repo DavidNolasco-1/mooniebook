@@ -33,4 +33,8 @@ export class ModuloCatalogo {
   async consultarLibro(isbn: string): Promise<Libro | null> {
     return this.repoLibros.buscarPorIsbn(isbn)
   }
+
+  async obtenerTodos(): Promise<Libro[]> {
+    return this.repoLibros.obtenerTodos()
+  }
 }

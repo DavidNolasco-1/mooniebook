@@ -17,6 +17,10 @@ export class ModuloLectores {
     return this.repoLectores.buscarPorId(id)
   }
 
+  async obtenerTodos(): Promise<Lector[]> {
+    return this.repoLectores.obtenerTodos()
+  }
+
   async modificarLector(id: string, nuevo_correo: string): Promise<void> {
     const lector = await this.repoLectores.buscarPorId(id)
     if (!lector) throw new Error('LECTOR_NO_ENCONTRADO')

@@ -25,6 +25,19 @@ export class RepositorioLectoresFirebase implements IRepositorioLectores {
     )
   }
 
+  async obtenerTodos(): Promise<Lector[]> {
+    const snap = await db.collection('lectores').get()
+    return snap.docs.map((doc) => {
+      const d = doc.data()
+      return new Lector(
+        d['id']                   ?? doc.id,
+        d['correo_electronico']   ?? d['correo'] ?? '',
+        d['estado']               as EstadoLector,
+        d['fecha_fin_suspension'] ?? null,
+      )
+    })
+  }
+
   async contarTotal(): Promise<number> {
     const snap = await db.collection('lectores').count().get()
     return snap.data().count

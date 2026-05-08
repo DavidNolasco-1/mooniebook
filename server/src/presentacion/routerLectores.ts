@@ -24,6 +24,16 @@ export function routerLectores(modLectores: ModuloLectores): Router {
     }
   })
 
+  // GET /lectores — listar todos los lectores
+  router.get('/', async (_req: Request, res: Response) => {
+    try {
+      const lectores = await modLectores.obtenerTodos()
+      res.json(lectores)
+    } catch (err) {
+      handleError(res, err)
+    }
+  })
+
   // GET /lectores/:id — consultar lector
   router.get('/:id', async (req: Request, res: Response) => {
     try {

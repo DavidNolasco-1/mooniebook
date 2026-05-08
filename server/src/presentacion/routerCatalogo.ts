@@ -34,6 +34,16 @@ export function routerCatalogo(modCatalogo: ModuloCatalogo): Router {
     }
   })
 
+  // GET /libros — listar todos los libros
+  router.get('/', async (_req: Request, res: Response) => {
+    try {
+      const libros = await modCatalogo.obtenerTodos()
+      res.json(libros)
+    } catch (err) {
+      handleError(res, err)
+    }
+  })
+
   // GET /libros/:isbn — consultar libro
   router.get('/:isbn', async (req: Request, res: Response) => {
     try {
