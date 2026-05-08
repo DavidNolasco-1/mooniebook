@@ -116,7 +116,7 @@ export default function LectoresIndex() {
               <Text style={styles.cellBoxText}>07/05/2026</Text>
             </View>
             <View style={[styles.cellBox, { flex: COLS[3].flex }]}>
-              <Text style={styles.cellBoxText} numberOfLines={1}>{lector.responsable ?? '—'}</Text>
+              <Text style={styles.cellBoxText} numberOfLines={1}>{lector.correo_electronico ?? '—'}</Text>
             </View>
           </View>
         ))}

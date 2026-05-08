@@ -59,15 +59,20 @@ export default function PrestamosDevolver() {
         .then((data) =>
           setPrestamos(
             data
-              .map((p) => ({
-                idDoc:       p.id,
-                idPrestamo:  (p.id ?? '').substring(0, 6),
-                idLector:    p.idLector    ?? '—',
-                isbn:        p.isbn        ?? '—',
-                estado:      p.estado      ?? '—',
-                fecha:       p.fechaSalida ? formatFecha(p.fechaSalida) : '—',
-                responsable: p.responsable ?? '—',
-              }))
+              .map((p) => {
+                const docId = p.identificador ?? p.id ?? ''
+                return {
+                  idDoc:       docId,
+                  idPrestamo:  docId.substring(0, 6),
+                  idLector:    p.id_lector   ?? p.idLector  ?? '—',
+                  isbn:        p.isbn_libro  ?? p.isbn      ?? '—',
+                  estado:      p.estado      ?? '—',
+                  fecha:       p.fecha_prestamo
+                                 ? formatFecha(p.fecha_prestamo)
+                                 : p.fechaSalida ? formatFecha(p.fechaSalida) : '—',
+                  responsable: p.responsable ?? '—',
+                }
+              })
           )
         )
         .catch((e) => console.error('PrestamosDevolver:', e))
@@ -160,7 +165,7 @@ export default function PrestamosDevolver() {
                           text: 'Confirmar',
                           onPress: async () => {
                             try {
-                              await procesarDevolucion(row.idDoc, row.isbn)
+                              await procesarDevolucion(row.idDoc)
                               Alert.alert('Éxito', 'Devolución registrada correctamente.', [
                                 { text: 'OK', onPress: () => router.back() },
                               ])

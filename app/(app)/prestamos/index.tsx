@@ -44,10 +44,12 @@ export default function PrestamosIndex() {
         .then((data) =>
           setPrestamosActivos(
             data.map((p) => ({
-              isbn:      p.isbn      ?? '—',
-              idLector:  p.idLector  ?? '—',
-              fecha:     p.fechaSalida ? formatFecha(p.fechaSalida) : '—',
-              estado:    p.estado    ?? '—',
+              isbn:     p.isbn_libro  ?? p.isbn     ?? '—',
+              idLector: p.id_lector   ?? p.idLector  ?? '—',
+              fecha:    p.fecha_prestamo
+                          ? formatFecha(p.fecha_prestamo)
+                          : p.fechaSalida ? formatFecha(p.fechaSalida) : '—',
+              estado:   p.estado ?? '—',
             }))
           )
         )
