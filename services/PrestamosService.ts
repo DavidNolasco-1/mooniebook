@@ -1,53 +1,26 @@
-import { db } from '@/lib/firebase'
-import { collection, addDoc, getDocs, query, orderBy, getDoc, doc, updateDoc } from 'firebase/firestore'
+const BASE = process.env.EXPO_PUBLIC_SERVER_URL
 
-export const registrarPrestamo = async (datos: any): Promise<string> => {
-  const { idLector, isbn } = datos
-
-  const lectorSnap = await getDoc(doc(db, 'lectores', idLector))
-  if (!lectorSnap.exists())
-    throw new Error('El lector no está registrado.')
-  if (lectorSnap.data().estado !== 'Habilitado')
-    throw new Error('El lector no está habilitado para pedir libros.')
-
-  const libroSnap = await getDoc(doc(db, 'libros', isbn))
-  if (!libroSnap.exists())
-    throw new Error('El libro no existe en el catálogo.')
-  if ((libroSnap.data().ejemplares ?? 0) <= 0)
-    throw new Error('El libro no se encuentra disponible en este momento.')
-
-  const ref = await addDoc(collection(db, 'prestamos'), { ...datos, estado: 'Activo' })
-
-  await updateDoc(doc(db, 'libros', isbn), {
-    ejemplares: libroSnap.data().ejemplares - 1,
+export const registrarPrestamo = async (datos: any) => {
+  const res = await fetch(`${BASE}/prestamos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
   })
-
-  return ref.id
+  if (!res.ok) throw new Error((await res.json()).error)
+  return res.json()
 }
 
-export const procesarDevolucion = async (idPrestamo: string, isbn: string): Promise<void> => {
-  try {
-    await updateDoc(doc(db, 'prestamos', idPrestamo), { estado: 'Finalizado' })
-
-    const libroSnap = await getDoc(doc(db, 'libros', isbn))
-    if (libroSnap.exists()) {
-      await updateDoc(doc(db, 'libros', isbn), {
-        ejemplares: (libroSnap.data().ejemplares ?? 0) + 1,
-      })
-    }
-  } catch (error) {
-    console.error('procesarDevolucion:', error)
-    throw error
-  }
+export const procesarDevolucion = async (idPrestamo: string) => {
+  const res = await fetch(`${BASE}/prestamos/${idPrestamo}/devolucion`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  })
+  if (!res.ok) throw new Error((await res.json()).error)
+  return res.json()
 }
 
-export const obtenerPrestamosRecientes = async (): Promise<any[]> => {
-  try {
-    const q = query(collection(db, 'prestamos'), orderBy('fechaSalida', 'desc'))
-    const snapshot = await getDocs(q)
-    return snapshot.docs.map((snap) => ({ id: snap.id, ...snap.data() }))
-  } catch (error) {
-    console.error('obtenerPrestamosRecientes:', error)
-    throw error
-  }
+export const obtenerPrestamosRecientes = async () => {
+  const res = await fetch(`${BASE}/prestamos`)
+  if (!res.ok) return []
+  return res.json()
 }

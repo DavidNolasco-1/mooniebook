@@ -1,62 +1,34 @@
-import { db } from '@/lib/firebase'
-import {
-  collection, getDocs, setDoc,
-  query, orderBy, limit,
-  doc, getDoc, updateDoc,
-} from 'firebase/firestore'
+const BASE = process.env.EXPO_PUBLIC_SERVER_URL
 
-/**
- * Registra un lector con ID secuencial L-001, L-002, etc.
- * Cuenta los documentos existentes para calcular el siguiente número.
- */
-export const registrarLector = async (datos: any): Promise<string> => {
-  try {
-    const snapshot = await getDocs(collection(db, 'lectores'))
-    const nuevoId = `L-${String(snapshot.size + 1).padStart(3, '0')}`
-    await setDoc(doc(db, 'lectores', nuevoId), { ...datos, idLector: nuevoId })
-    return nuevoId
-  } catch (error) {
-    console.error('registrarLector:', error)
-    throw error
-  }
+export const registrarLector = async (datos: any) => {
+  const res = await fetch(`${BASE}/lectores`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
+  })
+  if (!res.ok) throw new Error((await res.json()).error)
+  return res.json()
 }
 
-/**
- * Retorna los últimos 5 lectores ordenados por ID descendente.
- * Requiere un índice compuesto si se añade un campo timestamp en el futuro.
- */
-export const obtenerLectoresRecientes = async (): Promise<any[]> => {
-  try {
-    const q = query(collection(db, 'lectores'), orderBy('idLector', 'desc'), limit(5))
-    const snapshot = await getDocs(q)
-    return snapshot.docs.map((snap) => ({ id: snap.id, ...snap.data() }))
-  } catch (error) {
-    console.error('obtenerLectoresRecientes:', error)
-    throw error
-  }
+export const buscarLectorPorId = async (id: string) => {
+  const res = await fetch(`${BASE}/lectores/${id}`)
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error((await res.json()).error)
+  return res.json()
 }
 
-/**
- * Busca un lector por su ID de documento en Firestore.
- * Retorna null si no existe.
- */
-export const actualizarLector = async (idLector: string, datos: any): Promise<void> => {
-  try {
-    await updateDoc(doc(db, 'lectores', idLector), datos)
-  } catch (error) {
-    console.error('actualizarLector:', error)
-    throw error
-  }
+export const actualizarLector = async (id: string, datos: any) => {
+  const res = await fetch(`${BASE}/lectores/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
+  })
+  if (!res.ok) throw new Error((await res.json()).error)
+  return res.json()
 }
 
-export const buscarLectorPorId = async (id: string): Promise<any | null> => {
-  try {
-    const ref = doc(db, 'lectores', id)
-    const snapshot = await getDoc(ref)
-    if (!snapshot.exists()) return null
-    return { id: snapshot.id, ...snapshot.data() }
-  } catch (error) {
-    console.error('buscarLectorPorId:', error)
-    throw error
-  }
+export const obtenerLectoresRecientes = async () => {
+  const res = await fetch(`${BASE}/lectores`)
+  if (!res.ok) return []
+  return res.json()
 }

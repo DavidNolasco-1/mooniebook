@@ -1,47 +1,34 @@
-import { db } from '@/lib/firebase'
-import { collection, getDocs, setDoc, doc, getDoc, updateDoc, query, orderBy, limit } from 'firebase/firestore'
+const BASE = process.env.EXPO_PUBLIC_SERVER_URL
 
-export const registrarLibro = async (datos: any): Promise<void> => {
-  try {
-    await setDoc(doc(db, 'libros', datos.isbn), {
-      ...datos,
-      ejemplares: Number(datos.ejemplares),
-    })
-  } catch (error) {
-    console.error('registrarLibro:', error)
-    throw error
-  }
+export const registrarLibro = async (datos: any) => {
+  const res = await fetch(`${BASE}/libros`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
+  })
+  if (!res.ok) throw new Error((await res.json()).error)
+  return res.json()
 }
 
-export const obtenerLibrosRecientes = async (): Promise<any[]> => {
-  try {
-    const snapshot = await getDocs(collection(db, 'libros'))
-    return snapshot.docs.map((snap) => ({ id: snap.id, ...snap.data() }))
-  } catch (error) {
-    console.error('obtenerLibrosRecientes:', error)
-    throw error
-  }
+export const consultarLibro = async (isbn: string) => {
+  const res = await fetch(`${BASE}/libros/${isbn}`)
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error((await res.json()).error)
+  return res.json()
 }
 
-export const buscarLibroPorIsbn = async (isbn: string): Promise<any | null> => {
-  try {
-    const snapshot = await getDoc(doc(db, 'libros', isbn))
-    if (!snapshot.exists()) return null
-    return { id: snapshot.id, ...snapshot.data() }
-  } catch (error) {
-    console.error('buscarLibroPorIsbn:', error)
-    throw error
-  }
+export const actualizarLibro = async (isbn: string, datos: any) => {
+  const res = await fetch(`${BASE}/libros/${isbn}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
+  })
+  if (!res.ok) throw new Error((await res.json()).error)
+  return res.json()
 }
 
-export const actualizarLibro = async (isbn: string, datos: any): Promise<void> => {
-  try {
-    await updateDoc(doc(db, 'libros', isbn), {
-      ...datos,
-      ejemplares: Number(datos.ejemplares),
-    })
-  } catch (error) {
-    console.error('actualizarLibro:', error)
-    throw error
-  }
+export const obtenerLibrosRecientes = async () => {
+  const res = await fetch(`${BASE}/libros`)
+  if (!res.ok) return []
+  return res.json()
 }
