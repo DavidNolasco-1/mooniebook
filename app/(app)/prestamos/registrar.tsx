@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
-import { auth, db } from '@/lib/firebase'
-import { getDoc, doc } from 'firebase/firestore'
+import { auth } from '@/lib/firebase'
 import { theme } from '@/styles/theme'
 import { GlassInput } from '@/components/GlassInput'
 import { registrarPrestamo } from '@/services/PrestamosService'
+import { buscarLectorPorId } from '@/services/LectoresService'
+import { consultarLibro } from '@/services/CatalogoService'
 
 // ─── Estilos compartidos ──────────────────────────────────────────────────────
 
@@ -40,18 +41,18 @@ export default function PrestamosRegistrar() {
   useEffect(() => {
     if (!idLector.trim()) { setEstadoLector(''); return }
     setEstadoLector('Buscando...')
-    getDoc(doc(db, 'lectores', idLector.trim()))
-      .then((snap) => setEstadoLector(snap.exists() ? snap.data().estado : 'No encontrado'))
+    buscarLectorPorId(idLector.trim())
+      .then(lector => setEstadoLector(lector ? lector.estado : 'No encontrado'))
       .catch(() => setEstadoLector('Error'))
   }, [idLector])
 
   useEffect(() => {
     if (!isbn.trim()) { setEstadoLibro(''); return }
     setEstadoLibro('Buscando...')
-    getDoc(doc(db, 'libros', isbn.trim()))
-      .then((snap) => {
-        if (!snap.exists()) { setEstadoLibro('No encontrado'); return }
-        setEstadoLibro(Number(snap.data().ejemplares) > 0 ? 'Disponible' : 'No Disponible')
+    consultarLibro(isbn.trim())
+      .then(libro => {
+        if (!libro) { setEstadoLibro('No encontrado'); return }
+        setEstadoLibro(libro.cantidad_disponible > 0 ? 'Disponible' : 'No Disponible')
       })
       .catch(() => setEstadoLibro('Error'))
   }, [isbn])
