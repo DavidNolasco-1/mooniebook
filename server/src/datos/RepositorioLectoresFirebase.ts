@@ -18,9 +18,9 @@ export class RepositorioLectoresFirebase implements IRepositorioLectores {
     if (!snap.exists) return null
     const d = snap.data()!
     return new Lector(
-      d['id'],
-      d['correo_electronico'],
-      d['estado'] as EstadoLector,
+      d['id']                   ?? id,
+      d['correo_electronico']   ?? d['correo'] ?? '',
+      d['estado']               as EstadoLector,
       d['fecha_fin_suspension'] ?? null,
     )
   }

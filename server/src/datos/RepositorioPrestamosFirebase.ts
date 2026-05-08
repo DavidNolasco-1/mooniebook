@@ -3,6 +3,21 @@ import type { IRepositorioPrestamos } from '../dominio/interfaces/IRepositorioPr
 import { Prestamo } from '../dominio/entidades/Prestamo.js'
 import { EstadoPrestamo } from '../dominio/enums/EstadoPrestamo.js'
 
+function docToPrestamo(id: string, d: FirebaseFirestore.DocumentData): Prestamo {
+  const estadoRaw = (d['estado'] as string) === 'Devuelto'
+    ? EstadoPrestamo.Finalizado
+    : d['estado'] as EstadoPrestamo
+
+  return new Prestamo(
+    d['identificador']             ?? id,
+    d['id_lector']                 ?? d['idLector']   ?? '',
+    d['isbn_libro']                ?? d['isbn']        ?? '',
+    d['fecha_prestamo']            ?? d['fechaSalida'] ?? '',
+    d['fecha_devolucion_esperada'] ?? d['fechaEntrega'] ?? '',
+    estadoRaw,
+  )
+}
+
 export class RepositorioPrestamosFirebase implements IRepositorioPrestamos {
   async guardar(prestamo: Prestamo): Promise<void> {
     await db.collection('prestamos').doc(prestamo.identificador).set({
@@ -18,32 +33,12 @@ export class RepositorioPrestamosFirebase implements IRepositorioPrestamos {
   async buscarPorId(id: string): Promise<Prestamo | null> {
     const snap = await db.collection('prestamos').doc(id).get()
     if (!snap.exists) return null
-    const d = snap.data()!
-    return new Prestamo(
-      d['identificador'],
-      d['id_lector'],
-      d['isbn_libro'],
-      d['fecha_prestamo'],
-      d['fecha_devolucion_esperada'],
-      d['estado'] as EstadoPrestamo,
-    )
+    return docToPrestamo(snap.id, snap.data()!)
   }
 
   async obtenerTodos(): Promise<Prestamo[]> {
-    const snap = await db.collection('prestamos')
-      .orderBy('fecha_prestamo', 'desc')
-      .get()
-    return snap.docs.map((doc) => {
-      const d = doc.data()
-      return new Prestamo(
-        d['identificador'],
-        d['id_lector'],
-        d['isbn_libro'],
-        d['fecha_prestamo'],
-        d['fecha_devolucion_esperada'],
-        d['estado'] as EstadoPrestamo,
-      )
-    })
+    const snap = await db.collection('prestamos').get()
+    return snap.docs.map((doc) => docToPrestamo(doc.id, doc.data()))
   }
 
   async contarTotal(): Promise<number> {
