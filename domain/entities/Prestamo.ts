@@ -1,4 +1,4 @@
-import { EstadoPrestamo } from '../enums/EstadoPrestamo.js'
+import { EstadoPrestamo } from '../enums/EstadoPrestamo'
 
 export class Prestamo {
   identificador: string
@@ -16,12 +16,12 @@ export class Prestamo {
     fecha_devolucion_esperada: string,
     estado: EstadoPrestamo,
   ) {
-    this.identificador           = identificador
-    this.id_lector               = id_lector
-    this.isbn_libro              = isbn_libro
-    this.fecha_prestamo          = fecha_prestamo
+    this.identificador            = identificador
+    this.id_lector                = id_lector
+    this.isbn_libro               = isbn_libro
+    this.fecha_prestamo           = fecha_prestamo
     this.fecha_devolucion_esperada = fecha_devolucion_esperada
-    this.estado                  = estado
+    this.estado                   = estado
   }
 
   finalizar(): void {

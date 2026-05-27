@@ -1,4 +1,4 @@
-import { EstadoLector } from '../enums/EstadoLector.js'
+import { EstadoLector } from '../enums/EstadoLector'
 
 export class Lector {
   id: string

@@ -5,6 +5,8 @@ import { MaterialIcons } from '@expo/vector-icons'
 import { theme } from '@/styles/theme'
 import { obtenerLectoresRecientes } from '@/services/LectoresService'
 
+type MovimientoLector = { id: string; accion: string; fecha: string; responsable: string }
+
 const COLS: { key: keyof MovimientoLector; header: string; flex: number }[] = [
   { key: 'id',          header: 'ID_LECTOR',  flex: 2 },
   { key: 'accion',      header: 'Acción',      flex: 2 },
@@ -97,7 +99,7 @@ export default function LectoresIndex() {
         {/* Encabezados */}
         <View style={styles.tableRow}>
           {COLS.map((col) => (
-            <View key={col.key} style={[styles.cellBox, styles.headerBox, { flex: col.flex }]}>
+            <View key={String(col.key)} style={[styles.cellBox, styles.headerBox, { flex: col.flex }]}>
               <Text style={styles.headerBoxText}>{col.header}</Text>
             </View>
           ))}
