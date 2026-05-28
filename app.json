@@ -5,13 +5,13 @@
     "scheme": "mooniebook",
     "version": "1.0.0",
     "orientation": "landscape",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#192f6a"
     },
     "ios": {
       "supportsTablet": true
@@ -19,8 +19,8 @@
     "android": {
       "package": "com.mooniebook.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#192f6a"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
