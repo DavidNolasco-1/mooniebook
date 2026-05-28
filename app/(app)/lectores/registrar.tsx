@@ -22,7 +22,7 @@ export default function LectoresRegistrar() {
   const [correo, setCorreo] = useState('')
   const [error,  setError]  = useState('')
 
-  const personaCargo = auth.currentUser?.displayName ?? 'Emily Dannae'
+  const personaCargo = auth.currentUser?.displayName ?? auth.currentUser?.email?.split('@')[0] ?? 'Bibliotecario'
 
   const handleRegistrar = async () => {
     if (!correo.trim()) {
@@ -68,12 +68,12 @@ export default function LectoresRegistrar() {
       <View style={styles.contentArea}>
         <View style={styles.mainPanel}>
 
-          {/* ── Sección superior: avatar + ID ── */}
+          {/* ── Sección superior: avatar ── */}
           <View style={styles.topSection}>
             <MaterialIcons name="account-circle" size={100} color="rgba(255,255,255,0.55)" />
-            <Text style={styles.idLabel}>ID Lector</Text>
             <View style={styles.idPill}>
-              <Text style={styles.idPillText}>L-025</Text>
+              <MaterialIcons name="auto-awesome" size={13} color={theme.colors.titleText} />
+              <Text style={styles.idPillText}>El ID se asigna automáticamente</Text>
             </View>
           </View>
 
@@ -207,18 +207,20 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   idPill: {
-    backgroundColor: theme.colors.inputBackground,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 100,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 6,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.15)',
   },
   idPillText: {
-    color: theme.colors.textEditable,
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    color: theme.colors.titleText,
+    fontSize: 12,
+    fontWeight: '600',
   },
 
   /* ── Formulario ──────────────────────────────────────────────────────── */

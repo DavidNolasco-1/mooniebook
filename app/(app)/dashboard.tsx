@@ -80,7 +80,7 @@ const BARS = [
 
 export default function Dashboard() {
   const router = useRouter()
-  const displayName = auth.currentUser?.displayName ?? 'Bibliotecario'
+  const displayName = auth.currentUser?.displayName ?? auth.currentUser?.email?.split('@')[0] ?? 'Bibliotecario'
 
   const [totalLibros,       setTotalLibros]       = useState<number | null>(null)
   const [totalLectores,     setTotalLectores]     = useState<number | null>(null)

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useRouter, useLocalSearchParams } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { auth } from '@/lib/firebase'
 import { theme } from '@/styles/theme'
@@ -20,14 +20,15 @@ const GLASS = {
 // ─── Componente ──────────────────────────────────────────────────────────────
 
 export default function PrestamosRegistrar() {
-  const router = useRouter()
+  const router  = useRouter()
+  const params  = useLocalSearchParams<{ isbn?: string }>()
 
   const [estadoLector,  setEstadoLector] = useState('')
   const [estadoLibro,   setEstadoLibro]  = useState('')
-  const [isbn,          setIsbn]         = useState('')
+  const [isbn,          setIsbn]         = useState(params.isbn ?? '')
   const [idLector,      setIdLector]     = useState('')
 
-  const personaCargo = auth.currentUser?.displayName ?? 'Emily Dannae'
+  const personaCargo = auth.currentUser?.displayName ?? auth.currentUser?.email?.split('@')[0] ?? 'Bibliotecario'
   const isDisabled   = estadoLibro !== 'Disponible' || estadoLector !== 'Habilitado'
 
   const colorLector = estadoLector === 'Habilitado'   ? theme.colors.statusHabilitado

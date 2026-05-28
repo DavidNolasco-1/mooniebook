@@ -1,10 +1,9 @@
 import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { Libro } from '@/domain/entities/Libro'
-import { Lector } from '@/domain/entities/Lector'
 import { Prestamo } from '@/domain/entities/Prestamo'
 import { EstadoPrestamo } from '@/domain/enums/EstadoPrestamo'
 import { EstadoLector } from '@/domain/enums/EstadoLector'
+import { docToLector, docToLibro } from '@/services/converters'
 
 const MULTA_POR_DIA   = 50
 const DIAS_SUSPENSION = 30
@@ -20,27 +19,6 @@ function calcularFechaDevolucion(inicio: Date, diasHabiles: number): string {
   return fecha.toISOString().split('T')[0]!
 }
 
-function docToLector(id: string, d: Record<string, any>): Lector {
-  return new Lector(
-    d['id'] ?? d['idLector'] ?? id,
-    d['correo_electronico'] ?? d['correo'] ?? '',
-    (d['estado'] as EstadoLector) ?? EstadoLector.Habilitado,
-    d['fecha_fin_suspension'] ?? null,
-  )
-}
-
-function docToLibro(isbn: string, d: Record<string, any>): Libro {
-  return new Libro(
-    d['isbn'] ?? isbn,
-    d['titulo'] ?? '',
-    d['autor']  ?? '',
-    d['editorial'] ?? '',
-    d['categoria'] ?? '',
-    d['fecha_publicacion'] ?? '',
-    Number(d['cantidad_total']) || 0,
-    Number(d['cantidad_disponible'] ?? d['ejemplares']) || 0,
-  )
-}
 
 function docToPrestamo(id: string, d: Record<string, any>): Prestamo {
   return new Prestamo(

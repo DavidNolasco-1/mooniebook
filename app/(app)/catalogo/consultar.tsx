@@ -1,23 +1,10 @@
-import { useState } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useState, useEffect } from 'react'
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput, Image } from 'react-native'
+import { useRouter, useLocalSearchParams } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { theme } from '@/styles/theme'
 import { GlassInput } from '@/components/GlassInput'
-
-// ─── Datos mock ───────────────────────────────────────────────────────────────
-
-// TODO: conectar a servidor
-const LIBRO_MOCK = {
-  isbn:             '978-3-16-148410-0',
-  titulo:           'La Noche Estrellada',
-  autor:            'Vincent van Gogh',
-  editorial:        'Museo de Arte Moderno',
-  fechaPublicacion: '1 junio 2019',
-  totalEjemplares:  6,
-  disponibles:      2,
-  prestamosMes:     15,
-}
+import { consultarLibro } from '@/services/CatalogoService'
 
 // ─── Estilos compartidos ──────────────────────────────────────────────────────
 
@@ -30,13 +17,27 @@ const GLASS = {
 // ─── Componente ──────────────────────────────────────────────────────────────
 
 export default function CatalogoConsultar() {
-  const router = useRouter()
-  const [isbnQuery,      setIsbnQuery]      = useState('')
-  const [libroEncontrado, setLibroEncontrado] = useState(false)
+  const router  = useRouter()
+  const params  = useLocalSearchParams<{ isbn?: string }>()
 
-  const handleBuscar = () => {
-    if (isbnQuery.trim().length > 0) setLibroEncontrado(true)
+  const [isbnQuery,    setIsbnQuery]    = useState(params.isbn ?? '')
+  const [libro,        setLibro]        = useState<Record<string, any> | null>(null)
+  const [noEncontrado, setNoEncontrado] = useState(false)
+
+  const buscar = async (query: string) => {
+    if (!query.trim()) return
+    setLibro(null)
+    setNoEncontrado(false)
+    const result = await consultarLibro(query.trim())
+    if (result) { setLibro(result) } else { setNoEncontrado(true) }
   }
+
+  const handleBuscar = () => buscar(isbnQuery)
+
+  // Auto-buscar cuando llega el ISBN por param de navegación
+  useEffect(() => {
+    if (params.isbn) buscar(params.isbn)
+  }, [params.isbn])
 
   return (
     <View style={styles.container}>
@@ -80,7 +81,7 @@ export default function CatalogoConsultar() {
       </View>
 
       {/* ── Contenido principal ─────────────────────────────────────────── */}
-      {libroEncontrado ? (
+      {libro ? (
 
         /* ── Ficha técnica del libro ── */
         <View style={[styles.mainPanel, styles.foundPanel]}>
@@ -88,38 +89,44 @@ export default function CatalogoConsultar() {
           {/* Columna izquierda */}
           <View style={styles.leftColumn}>
 
-            {/* Imágenes placeholder */}
+            {/* Imágenes */}
             <View style={styles.imagesRow}>
-              <View style={[styles.imagePlaceholder, { backgroundColor: theme.colors.buttonSecondary }]}>
-                <MaterialIcons name="image" size={34} color="rgba(255,255,255,0.35)" />
-                <Text style={styles.imagePlaceholderLabel}>Portada</Text>
-              </View>
-              <View style={[styles.imagePlaceholder, { backgroundColor: theme.colors.titleBackground }]}>
-                <MaterialIcons name="auto-stories" size={34} color="rgba(255,255,255,0.35)" />
-                <Text style={styles.imagePlaceholderLabel}>Interior</Text>
-              </View>
-            </View>
-
-            {/* Panel estadísticas */}
-            <View style={styles.statsPanel}>
-              <MaterialIcons name="bar-chart" size={14} color="rgba(255,255,255,0.5)" />
-              <Text style={styles.statsText}>
-                Este libro ha sido prestado{' '}
-                <Text style={styles.statsHighlight}>{LIBRO_MOCK.prestamosMes} veces</Text>
-                {' '}este mes.
-              </Text>
+              {libro.portada_frente ? (
+                <Image
+                  source={{ uri: `data:image/jpeg;base64,${libro.portada_frente}` }}
+                  style={styles.imageReal}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={[styles.imagePlaceholder, { backgroundColor: theme.colors.buttonSecondary }]}>
+                  <MaterialIcons name="image" size={34} color="rgba(255,255,255,0.35)" />
+                  <Text style={styles.imagePlaceholderLabel}>Portada</Text>
+                </View>
+              )}
+              {libro.portada_reverso ? (
+                <Image
+                  source={{ uri: `data:image/jpeg;base64,${libro.portada_reverso}` }}
+                  style={styles.imageReal}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={[styles.imagePlaceholder, { backgroundColor: theme.colors.titleBackground }]}>
+                  <MaterialIcons name="auto-stories" size={34} color="rgba(255,255,255,0.35)" />
+                  <Text style={styles.imagePlaceholderLabel}>Interior</Text>
+                </View>
+              )}
             </View>
 
             {/* Píldoras indicadores */}
             <View style={styles.pillsRow}>
               <View style={styles.pill}>
                 <MaterialIcons name="library-books" size={12} color="rgba(255,255,255,0.55)" />
-                <Text style={styles.pillText}>Total de Ejemplares: {LIBRO_MOCK.totalEjemplares}</Text>
+                <Text style={styles.pillText}>Total: {libro.cantidad_total}</Text>
               </View>
               <View style={[styles.pill, styles.pillAvailable]}>
                 <MaterialIcons name="bookmark" size={12} color={theme.colors.statusFinalizado} />
                 <Text style={[styles.pillText, { color: theme.colors.statusFinalizado }]}>
-                  Ejemplares Disponibles: {LIBRO_MOCK.disponibles}
+                  Disponibles: {libro.cantidad_disponible}
                 </Text>
               </View>
             </View>
@@ -135,19 +142,22 @@ export default function CatalogoConsultar() {
             {/* Fila de estado */}
             <View style={styles.statusRow}>
               <Text style={styles.statusLabel}>Estado</Text>
-              <View style={styles.statusBadge}>
-                <View style={styles.statusDot} />
-                <Text style={styles.statusBadgeText}>Disponible</Text>
+              <View style={[styles.statusBadge, libro.cantidad_disponible === 0 && styles.statusBadgeUnavailable]}>
+                <View style={[styles.statusDot, libro.cantidad_disponible === 0 && styles.statusDotUnavailable]} />
+                <Text style={[styles.statusBadgeText, libro.cantidad_disponible === 0 && styles.statusBadgeTextUnavailable]}>
+                  {libro.cantidad_disponible > 0 ? 'Disponible' : 'Sin ejemplares'}
+                </Text>
               </View>
             </View>
 
             {/* Campos de información */}
             <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={styles.fieldsContent}>
-              <GlassInput label="ISBN"              value={LIBRO_MOCK.isbn}             editable={false} />
-              <GlassInput label="Título"            value={LIBRO_MOCK.titulo}           editable={false} />
-              <GlassInput label="Autor"             value={LIBRO_MOCK.autor}            editable={false} />
-              <GlassInput label="Editorial"         value={LIBRO_MOCK.editorial}        editable={false} />
-              <GlassInput label="Fecha publicación" value={LIBRO_MOCK.fechaPublicacion} editable={false} />
+              <GlassInput label="ISBN"              value={libro.isbn}              editable={false} />
+              <GlassInput label="Título"            value={libro.titulo}            editable={false} />
+              <GlassInput label="Autor"             value={libro.autor}             editable={false} />
+              <GlassInput label="Editorial"         value={libro.editorial}         editable={false} />
+              <GlassInput label="Fecha publicación" value={libro.fecha_publicacion} editable={false} />
+              <GlassInput label="Categoría"         value={libro.categoria}         editable={false} />
             </ScrollView>
 
             {/* Botón realizar préstamo */}
@@ -156,7 +166,7 @@ export default function CatalogoConsultar() {
               onPress={() =>
                 router.push({
                   pathname: '/(app)/prestamos/registrar' as any,
-                  params: { isbn: LIBRO_MOCK.isbn },
+                  params: { isbn: libro.isbn },
                 })
               }
               activeOpacity={0.85}
@@ -170,12 +180,16 @@ export default function CatalogoConsultar() {
 
       ) : (
 
-        /* ── Estado vacío ── */
+        /* ── Estado vacío / no encontrado ── */
         <View style={[styles.mainPanel, styles.emptyState]}>
           <MaterialIcons name="menu-book" size={52} color="rgba(255,255,255,0.15)" />
-          <Text style={styles.emptyTitle}>Busca un libro por ISBN</Text>
+          <Text style={styles.emptyTitle}>
+            {noEncontrado ? 'ISBN no encontrado' : 'Busca un libro por ISBN'}
+          </Text>
           <Text style={styles.emptySubtitle}>
-            Ingresa el código ISBN y presiona el ícono de búsqueda para ver la ficha técnica del libro.
+            {noEncontrado
+              ? 'No existe ningún libro registrado con ese ISBN.'
+              : 'Ingresa el código ISBN y presiona el ícono de búsqueda para ver la ficha técnica del libro.'}
           </Text>
         </View>
 
@@ -289,6 +303,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+  imageReal: {
+    flex: 1,
+    borderRadius: 16,
+  },
 
   statsPanel: {
     ...GLASS,
@@ -370,16 +388,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
+  statusBadgeUnavailable: {
+    backgroundColor: 'rgba(239,68,68,0.12)',
+    borderColor: 'rgba(239,68,68,0.3)',
+  },
   statusDot: {
     width: 7,
     height: 7,
     borderRadius: 4,
     backgroundColor: theme.colors.statusHabilitado,
   },
+  statusDotUnavailable: {
+    backgroundColor: theme.colors.statusAtrasado,
+  },
   statusBadgeText: {
     color: theme.colors.statusHabilitado,
     fontSize: 12,
     fontWeight: '700',
+  },
+  statusBadgeTextUnavailable: {
+    color: theme.colors.statusAtrasado,
   },
 
   fieldsContent: {

@@ -5,13 +5,12 @@ import { MaterialIcons } from '@expo/vector-icons'
 import { theme } from '@/styles/theme'
 import { obtenerLectoresRecientes } from '@/services/LectoresService'
 
-type MovimientoLector = { id: string; accion: string; fecha: string; responsable: string }
+type MovimientoLector = { id: string; accion: string; responsable: string }
 
 const COLS: { key: keyof MovimientoLector; header: string; flex: number }[] = [
   { key: 'id',          header: 'ID_LECTOR',  flex: 2 },
-  { key: 'accion',      header: 'Acción',      flex: 2 },
-  { key: 'fecha',       header: 'Fecha',       flex: 2 },
-  { key: 'responsable', header: 'Responsable', flex: 3 },
+  { key: 'accion',      header: 'Acción',      flex: 3 },
+  { key: 'responsable', header: 'Responsable', flex: 4 },
 ]
 
 // ─── Estilos compartidos ──────────────────────────────────────────────────────
@@ -105,8 +104,8 @@ export default function LectoresIndex() {
           ))}
         </View>
 
-        {/* Filas de datos — Firestore */}
-        {lectores.map((lector, i) => (
+        {/* Filas de datos — Firestore (filtra IDs legacy que no son L-XXX) */}
+        {lectores.filter(l => /^L-\d+$/.test(l.id)).map((lector, i) => (
           <View key={i} style={styles.tableRow}>
             <View style={[styles.cellBox, { flex: COLS[0].flex }]}>
               <Text style={styles.cellBoxText} numberOfLines={1}>{lector.id}</Text>
@@ -115,10 +114,7 @@ export default function LectoresIndex() {
               <Text style={styles.cellBoxText}>Nuevo Registro</Text>
             </View>
             <View style={[styles.cellBox, { flex: COLS[2].flex }]}>
-              <Text style={styles.cellBoxText}>07/05/2026</Text>
-            </View>
-            <View style={[styles.cellBox, { flex: COLS[3].flex }]}>
-              <Text style={styles.cellBoxText} numberOfLines={1}>{lector.correo_electronico ?? '—'}</Text>
+              <Text style={styles.cellBoxText} numberOfLines={1}>{lector.responsable ?? lector.correo_electronico ?? '—'}</Text>
             </View>
           </View>
         ))}

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
 import { useRouter, useFocusEffect } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { theme } from '@/styles/theme'
@@ -43,14 +43,16 @@ export default function PrestamosIndex() {
       obtenerPrestamosRecientes()
         .then((data) =>
           setPrestamosActivos(
-            data.map((p) => ({
-              isbn:     p.isbn_libro  ?? p.isbn     ?? '—',
-              idLector: p.id_lector   ?? p.idLector  ?? '—',
-              fecha:    p.fecha_prestamo
-                          ? formatFecha(p.fecha_prestamo)
-                          : p.fechaSalida ? formatFecha(p.fechaSalida) : '—',
-              estado:   p.estado ?? '—',
-            }))
+            data
+              .filter((p) => (p.estado ?? p['estado']) === 'Activo')
+              .map((p) => ({
+                isbn:     p.isbn_libro  ?? p.isbn     ?? '—',
+                idLector: p.id_lector   ?? p.idLector  ?? '—',
+                fecha:    p.fecha_prestamo
+                            ? formatFecha(p.fecha_prestamo)
+                            : p.fechaSalida ? formatFecha(p.fechaSalida) : '—',
+                estado:   p.estado ?? '—',
+              }))
           )
         )
         .catch((e) => console.error('PrestamosIndex:', e))
@@ -133,15 +135,17 @@ export default function PrestamosIndex() {
             <Text style={styles.emptyText}>Sin préstamos activos</Text>
           </View>
         ) : (
-          prestamosActivos.map((row, i) => (
-            <View key={i} style={styles.tableRow}>
-              {COLS.map((col) => (
-                <View key={col.key} style={[styles.cellBox, { flex: col.flex }]}>
-                  <Text style={styles.cellBoxText} numberOfLines={1}>{row[col.key]}</Text>
-                </View>
-              ))}
-            </View>
-          ))
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {prestamosActivos.map((row, i) => (
+              <View key={i} style={[styles.tableRow, { marginBottom: 8 }]}>
+                {COLS.map((col) => (
+                  <View key={col.key} style={[styles.cellBox, { flex: col.flex }]}>
+                    <Text style={styles.cellBoxText} numberOfLines={1}>{row[col.key]}</Text>
+                  </View>
+                ))}
+              </View>
+            ))}
+          </ScrollView>
         )}
 
       </View>

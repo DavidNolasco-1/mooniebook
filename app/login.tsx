@@ -96,6 +96,14 @@ export default function LoginScreen() {
               <Text style={styles.buttonText}>Iniciar sesión</Text>
             )}
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.adminLink}
+            onPress={() => router.push('/admin' as any)}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.adminLinkText}>Administrador del sistema</Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </LinearGradient>
@@ -162,5 +170,14 @@ const styles = StyleSheet.create({
     color: theme.colors.textEditable,
     fontSize: theme.fontSize.button,
     fontWeight: 'bold',
+  },
+  adminLink: {
+    marginTop: 12,
+    alignSelf: 'center',
+  },
+  adminLinkText: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 11,
+    letterSpacing: 0.3,
   },
 })

@@ -41,26 +41,48 @@ export default function CatalogoRegistrar() {
 
   // Solo lectura (auto)
   const fechaRegistro = fechaHoy()
-  const personaCargo  = auth.currentUser?.displayName ?? 'Encargado'
+  const personaCargo  = auth.currentUser?.displayName ?? auth.currentUser?.email?.split('@')[0] ?? 'Bibliotecario'
 
-  // Imágenes
+  // Imágenes (base64 para persistir en Firestore)
   const [portadaFrente,  setPortadaFrente]  = useState<string | null>(null)
   const [portadaReverso, setPortadaReverso] = useState<string | null>(null)
 
   // Validación
   const [error, setError] = useState('')
 
-  const abrirGaleria = async (lado: 'frente' | 'reverso') => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
+  const capturarImagen = async (lado: 'frente' | 'reverso') => {
+    const guardar = (b64: string) =>
+      lado === 'frente' ? setPortadaFrente(b64) : setPortadaReverso(b64)
+
+    const opciones = {
+      base64: true,
       allowsEditing: true,
-      aspect: [3, 4],
-      quality: 0.8,
-    })
-    if (!result.canceled && result.assets.length > 0) {
-      const uri = result.assets[0].uri
-      lado === 'frente' ? setPortadaFrente(uri) : setPortadaReverso(uri)
+      aspect: [3, 4] as [number, number],
+      quality: 0.35 as const,
     }
+
+    Alert.alert('Portada del libro', '¿Cómo quieres agregar la imagen?', [
+      {
+        text: 'Cámara',
+        onPress: async () => {
+          const { status } = await ImagePicker.requestCameraPermissionsAsync()
+          if (status !== 'granted') {
+            Alert.alert('Permiso denegado', 'Se necesita acceso a la cámara.')
+            return
+          }
+          const result = await ImagePicker.launchCameraAsync(opciones)
+          if (!result.canceled && result.assets[0].base64) guardar(result.assets[0].base64)
+        },
+      },
+      {
+        text: 'Galería',
+        onPress: async () => {
+          const result = await ImagePicker.launchImageLibraryAsync({ ...opciones, mediaTypes: 'images' })
+          if (!result.canceled && result.assets[0].base64) guardar(result.assets[0].base64)
+        },
+      },
+      { text: 'Cancelar', style: 'cancel' },
+    ])
   }
 
   const handleRegistrar = async () => {
@@ -70,7 +92,12 @@ export default function CatalogoRegistrar() {
     }
     setError('')
     try {
-      const datos = { isbn, titulo, autor, editorial, fechaPublicacion, ejemplares, categoria }
+      const datos = {
+        isbn, titulo, autor, editorial, fechaPublicacion, ejemplares, categoria,
+        portada_frente:  portadaFrente  ?? undefined,
+        portada_reverso: portadaReverso ?? undefined,
+        responsable:     personaCargo,
+      }
       await registrarLibro(datos)
       setIsbn(''); setTitulo(''); setAutor('')
       setEditorial(''); setFechaPublicacion(''); setEjemplares(''); setCategoria('')
@@ -182,16 +209,16 @@ export default function CatalogoRegistrar() {
               <Text style={styles.imagesLabel}>IMÁGENES DEL EJEMPLAR</Text>
               <View style={styles.imagesRow}>
                 {(['frente', 'reverso'] as const).map((lado) => {
-                  const uri = lado === 'frente' ? portadaFrente : portadaReverso
+                  const b64 = lado === 'frente' ? portadaFrente : portadaReverso
                   return (
                     <TouchableOpacity
                       key={lado}
                       style={styles.imageBox}
-                      onPress={() => abrirGaleria(lado)}
+                      onPress={() => capturarImagen(lado)}
                       activeOpacity={0.8}
                     >
-                      {uri ? (
-                        <Image source={{ uri }} style={styles.imagePreview} resizeMode="cover" />
+                      {b64 ? (
+                        <Image source={{ uri: `data:image/jpeg;base64,${b64}` }} style={styles.imagePreview} resizeMode="cover" />
                       ) : (
                         <>
                           <MaterialIcons name="add-photo-alternate" size={30} color="rgba(255,255,255,0.4)" />

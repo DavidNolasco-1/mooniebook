@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput, ImageBackground } from 'react-native'
 import { useRouter, useFocusEffect } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { theme } from '@/styles/theme'
-import { obtenerLibrosRecientes } from '@/services/CatalogoService'
+import { obtenerLibrosRecientes, obtenerMovimientosRecientes, Movimiento, TipoMovimiento } from '@/services/CatalogoService'
 
 // ─── Datos estáticos ─────────────────────────────────────────────────────────
 
@@ -33,18 +33,28 @@ const GLASS = {
   borderColor: 'rgba(255, 255, 255, 0.18)',
 } as const
 
+const ACCION_COLOR: Record<TipoMovimiento, string> = {
+  'Registro':   theme.colors.statusFinalizado,
+  'Préstamo':   theme.colors.statusActivo,
+  'Devolución': theme.colors.textReadOnly,
+}
+
 // ─── Componente ──────────────────────────────────────────────────────────────
 
 export default function CatalogoIndex() {
   const router = useRouter()
-  const [query,  setQuery]  = useState('')
-  const [libros, setLibros] = useState<any[]>([])
+  const [query,       setQuery]       = useState('')
+  const [libros,      setLibros]      = useState<any[]>([])
+  const [movimientos, setMovimientos] = useState<Movimiento[]>([])
 
   useFocusEffect(
     useCallback(() => {
       obtenerLibrosRecientes()
         .then(setLibros)
-        .catch((e) => console.error('CatalogoIndex:', e))
+        .catch((e) => console.error('CatalogoIndex libros:', e))
+      obtenerMovimientosRecientes()
+        .then(setMovimientos)
+        .catch((e) => console.error('CatalogoIndex movimientos:', e))
     }, [])
   )
 
@@ -137,15 +147,31 @@ export default function CatalogoIndex() {
               </View>
             ) : (
               librosFiltrados.map((libro, i) => {
-                const disponible = parseInt(libro.ejemplares ?? '0') > 0
+                const disponible = (libro.cantidad_disponible ?? 0) > 0
                 return (
-                  <View key={libro.id ?? i} style={styles.bookCard}>
-                    <View style={[styles.bookCover, { backgroundColor: COVER_COLORS[i % COVER_COLORS.length] }]}>
-                      <View style={[styles.disponibleDot, { backgroundColor: disponible ? theme.colors.statusFinalizado : theme.colors.statusAtrasado }]} />
-                    </View>
+                  <TouchableOpacity
+                    key={libro.id ?? i}
+                    style={styles.bookCard}
+                    onPress={() => router.push({ pathname: '/(app)/catalogo/consultar' as any, params: { isbn: libro.isbn } })}
+                    activeOpacity={0.82}
+                  >
+                    {libro.portada_frente ? (
+                      <ImageBackground
+                        source={{ uri: `data:image/jpeg;base64,${libro.portada_frente}` }}
+                        style={styles.bookCover}
+                        imageStyle={{ borderRadius: 8 }}
+                        resizeMode="cover"
+                      >
+                        <View style={[styles.disponibleDot, { backgroundColor: disponible ? theme.colors.statusFinalizado : theme.colors.statusAtrasado }]} />
+                      </ImageBackground>
+                    ) : (
+                      <View style={[styles.bookCover, { backgroundColor: COVER_COLORS[i % COVER_COLORS.length] }]}>
+                        <View style={[styles.disponibleDot, { backgroundColor: disponible ? theme.colors.statusFinalizado : theme.colors.statusAtrasado }]} />
+                      </View>
+                    )}
                     <Text style={styles.bookTitle} numberOfLines={2}>{libro.titulo}</Text>
                     <Text style={styles.bookAutor} numberOfLines={1}>{libro.autor}</Text>
-                  </View>
+                  </TouchableOpacity>
                 )
               })
             )}
@@ -159,7 +185,7 @@ export default function CatalogoIndex() {
             <Text style={styles.tableTitleText}>Resumen de los Últimos Movimientos</Text>
           </View>
 
-          {libros.length === 0 ? (
+          {movimientos.length === 0 ? (
             <View style={styles.tableEmpty}>
               <MaterialIcons name="inbox" size={34} color={theme.colors.textReadOnly} />
               <Text style={styles.tableEmptyText}>Aún no hay movimientos registrados</Text>
@@ -168,18 +194,21 @@ export default function CatalogoIndex() {
             <>
               {/* Encabezado */}
               <View style={styles.tableHeaderRow}>
-                {['ID_LIBRO', 'ACCIÓN', 'FECHA', 'RESPONSABLE'].map((h) => (
-                  <Text key={h} style={styles.tableHeaderCell}>{h}</Text>
+                {[
+                  { label: 'ISBN / ID',   flex: 3 },
+                  { label: 'ACCIÓN',      flex: 2 },
+                  { label: 'RESPONSABLE', flex: 4 },
+                ].map(({ label, flex }) => (
+                  <Text key={label} numberOfLines={1} style={[styles.tableHeaderCell, { flex }]}>{label}</Text>
                 ))}
               </View>
 
               {/* Filas */}
-              {libros.slice(0, 5).map((libro, i) => (
-                <View key={libro.isbn ?? i} style={[styles.tableRow, i % 2 === 1 && styles.tableRowAlt]}>
-                  <Text style={styles.tableCell} numberOfLines={1}>{libro.isbn}</Text>
-                  <Text style={styles.tableCell}>Nuevo Registro</Text>
-                  <Text style={styles.tableCell}>07/05/2026</Text>
-                  <Text style={styles.tableCell}>Emily Dannae</Text>
+              {movimientos.map((mov, i) => (
+                <View key={`${mov.id}-${i}`} style={[styles.tableRow, i % 2 === 1 && styles.tableRowAlt]}>
+                  <Text style={[styles.tableCell, { flex: 3 }]} numberOfLines={1}>{mov.id}</Text>
+                  <Text style={[styles.tableCell, { flex: 2, color: ACCION_COLOR[mov.accion] }]} numberOfLines={1}>{mov.accion}</Text>
+                  <Text style={[styles.tableCell, { flex: 4 }]} numberOfLines={1}>{mov.responsable}</Text>
                 </View>
               ))}
             </>
@@ -341,7 +370,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 68,
     borderRadius: 8,
-    opacity: 0.9,
     justifyContent: 'flex-end',
     alignItems: 'flex-end',
     padding: 4,
@@ -379,7 +407,7 @@ const styles = StyleSheet.create({
 
   /* Tabla */
   tableContainer: {
-    width: 310,
+    width: 360,
     ...GLASS,
     borderRadius: 20,
     padding: 16,

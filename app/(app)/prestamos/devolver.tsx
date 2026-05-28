@@ -82,7 +82,9 @@ export default function PrestamosDevolver() {
   const prestamosFiltrados = prestamos.filter((p) => {
     const q = busqueda.toLowerCase().trim()
     if (!q) return true
-    return p.idLector.toLowerCase().includes(q) || p.isbn.toLowerCase().includes(q)
+    return p.idLector.toLowerCase().includes(q)
+      || p.isbn.toLowerCase().includes(q)
+      || p.idDoc.toLowerCase().includes(q)
   })
 
   return (
